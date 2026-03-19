@@ -1407,19 +1407,6 @@ function imprimirFicha(mat){
   }, 500);
 }
 
-  const printArea = $('print-area');
-  printArea.innerHTML = html;
-  printArea.style.cssText = 'display:block !important;';
-  $('app-content').style.display='none';
-  setTimeout(()=>{
-    window.print();
-    setTimeout(()=>{
-      printArea.style.cssText = 'display:none;';
-      $('app-content').style.display='';
-    }, 500);
-  }, 500);
-}
-
 function relatorioCustoTurma(){
   const entr = DB.entregas;
   const funcs = DB.funcionarios;
