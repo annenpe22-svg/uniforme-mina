@@ -1,0 +1,2695 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UniMina — Controle de Uniformes</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f0f2f4;
+  --surface: #ffffff;
+  --surface2: #f5f6f8;
+  --surface3: #eceef1;
+  --border: #dde1e7;
+  --primary: #8B1A1A;
+  --primary2: #a82020;
+  --primary-dim: #f5e6e6;
+  --primary-bg: rgba(139,26,26,0.08);
+  --teal: #1e3a3a;
+  --teal2: #2a4f4f;
+  --teal-bg: rgba(30,58,58,0.08);
+  --text: #1a2a2a;
+  --text-muted: #5a6a6a;
+  --text-dim: #9aaaaa;
+  --danger: #c0392b;
+  --danger-bg: rgba(192,57,43,0.1);
+  --success: #1a7a4a;
+  --success-bg: rgba(26,122,74,0.1);
+  --info: #1a4a7a;
+  --info-bg: rgba(26,74,122,0.1);
+  --warn: #b85c00;
+  --warn-bg: rgba(184,92,0,0.1);
+  --sidebar-w: 220px;
+  --amber: #8B1A1A;
+  --amber2: #a82020;
+  --amber-dim: #6a1010;
+  --amber-bg: rgba(139,26,26,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;overflow:hidden;}
+
+/* SIDEBAR */
+#sidebar {
+  position:fixed;top:0;left:0;width:var(--sidebar-w);height:100%;
+  background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:100;
+  box-shadow:2px 0 8px rgba(0,0,0,0.06);
+}
+.sb-logo {
+  padding:20px 16px 16px;border-bottom:1px solid var(--border);
+}
+.sb-logo .brand {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:22px;font-weight:800;
+  color:var(--teal);letter-spacing:1px;line-height:1;
+}
+.sb-logo .brand span{color:var(--primary);}
+.sb-logo .sub {
+  font-size:10px;color:var(--text-muted);font-weight:500;
+  letter-spacing:2px;text-transform:uppercase;margin-top:3px;
+}
+.sb-nav {flex:1;padding:12px 0;overflow-y:auto;}
+.sb-item {
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;cursor:pointer;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:15px;font-weight:600;letter-spacing:0.5px;
+  text-transform:uppercase;color:var(--text-muted);
+  border-left:3px solid transparent;
+  transition:all .15s;border-radius:0 6px 6px 0;margin-right:8px;
+}
+.sb-item:hover{color:var(--teal);background:var(--teal-bg);}
+.sb-item.active{color:var(--primary);background:var(--primary-bg);border-left-color:var(--primary);}
+.sb-item .icon{font-size:18px;width:22px;text-align:center;flex-shrink:0;}
+.sb-section {
+  font-size:10px;font-weight:700;letter-spacing:2px;
+  color:var(--text-dim);padding:16px 16px 4px;
+  text-transform:uppercase;
+}
+.sb-footer {
+  padding:12px 16px;border-top:1px solid var(--border);
+  font-size:11px;color:var(--text-dim);
+}
+.sb-footer span{color:var(--primary);font-weight:600;}
+
+/* MAIN */
+#main {
+  margin-left:var(--sidebar-w);height:100%;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.topbar {
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:14px 24px;display:flex;align-items:center;
+  justify-content:space-between;flex-shrink:0;
+  box-shadow:0 1px 4px rgba(0,0,0,0.06);
+}
+.page-title {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:22px;font-weight:700;letter-spacing:0.5px;
+  color:var(--teal);
+}
+.topbar-actions{display:flex;gap:8px;align-items:center;}
+.content {flex:1;overflow-y:auto;padding:24px;}
+
+/* BUTTONS */
+.btn {
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:4px;border:none;
+  cursor:pointer;font-family:'Barlow',sans-serif;
+  font-size:13px;font-weight:600;transition:all .15s;
+}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary2);}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{background:var(--surface3);border-color:#bbb;}
+.btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(192,57,43,.3);}
+.btn-danger:hover{background:rgba(192,57,43,.2);}
+.btn-success{background:var(--success-bg);color:var(--success);border:1px solid rgba(26,122,74,.3);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn-xs{padding:3px 8px;font-size:11px;}
+
+/* CARDS */
+.card {
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:16px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.05);
+}
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card {
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:16px;position:relative;overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,0.05);
+}
+.stat-card::before{
+  content:'';position:absolute;top:0;left:0;width:3px;height:100%;
+}
+.stat-card.amber::before{background:var(--primary);}
+.stat-card.green::before{background:var(--success);}
+.stat-card.red::before{background:var(--danger);}
+.stat-card.blue::before{background:var(--info);}
+.stat-label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);}
+.stat-value{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;line-height:1.1;margin-top:4px;}
+.stat-card.amber .stat-value{color:var(--primary);}
+.stat-card.green .stat-value{color:var(--success);}
+.stat-card.red .stat-value{color:var(--danger);}
+.stat-card.blue .stat-value{color:var(--info);}
+.stat-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.04);}
+table{width:100%;border-collapse:collapse;background:var(--surface);}
+th{
+  background:var(--teal);
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:12px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;color:rgba(255,255,255,0.85);
+  padding:10px 12px;text-align:left;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{
+  padding:9px 12px;border-bottom:1px solid var(--border);
+  font-size:13px;vertical-align:middle;color:var(--text);
+}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(30,58,58,0.03);}
+
+/* BADGES */
+.badge{
+  display:inline-block;padding:2px 8px;border-radius:20px;
+  font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;
+}
+.badge-pending{background:var(--warn-bg);color:var(--warn);}
+.badge-approved{background:var(--info-bg);color:var(--info);}
+.badge-delivered{background:var(--success-bg);color:var(--success);}
+.badge-low{background:var(--danger-bg);color:var(--danger);}
+.badge-ok{background:var(--success-bg);color:var(--success);}
+.badge-empty{background:rgba(192,57,43,.15);color:var(--danger);}
+
+/* FORMS */
+.form-group{margin-bottom:14px;}
+.form-label{font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:5px;}
+.form-control {
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:4px;color:var(--text);padding:8px 10px;
+  font-family:'Barlow',sans-serif;font-size:13px;
+  transition:border-color .15s;
+}
+.form-control:focus{outline:none;border-color:var(--primary);}
+.form-control option{background:var(--surface);}
+.form-grid{display:grid;gap:12px;}
+.form-grid-2{grid-template-columns:1fr 1fr;}
+.form-grid-3{grid-template-columns:1fr 1fr 1fr;}
+
+/* MODALS */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);
+  z-index:999;align-items:center;justify-content:center;
+}
+.modal-overlay.show{display:flex;}
+.modal{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;width:600px;max-width:95vw;
+  max-height:90vh;overflow-y:auto;
+  box-shadow:0 8px 32px rgba(0,0,0,0.15);
+}
+.modal-lg{width:800px;}
+.modal-header{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--teal);border-radius:10px 10px 0 0;
+}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#fff;}
+.modal-close{background:none;border:none;color:rgba(255,255,255,0.7);cursor:pointer;font-size:20px;line-height:1;}
+.modal-close:hover{color:#fff;}
+.modal-body{padding:20px;}
+.modal-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+
+/* SEARCH */
+.search-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:4px;display:flex;align-items:center;gap:8px;
+  padding:6px 10px;
+}
+.search-box input{
+  background:none;border:none;color:var(--text);
+  font-family:'Barlow',sans-serif;font-size:13px;outline:none;
+  width:220px;
+}
+.search-box .icon{color:var(--text-muted);}
+
+/* ALERT */
+.alert{padding:10px 14px;border-radius:6px;margin-bottom:14px;font-size:13px;}
+.alert-warn{background:var(--warn-bg);border-left:3px solid var(--warn);color:var(--warn);}
+.alert-danger{background:var(--danger-bg);border-left:3px solid var(--danger);color:var(--danger);}
+.alert-success{background:var(--success-bg);border-left:3px solid var(--success);color:var(--success);}
+.alert-info{background:var(--info-bg);border-left:3px solid var(--info);color:var(--info);}
+
+/* TABS */
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:20px;gap:4px;}
+.tab{
+  padding:9px 16px;cursor:pointer;font-size:13px;font-weight:600;
+  color:var(--text-muted);border-bottom:2px solid transparent;
+  margin-bottom:-2px;transition:all .15s;
+}
+.tab:hover{color:var(--teal);}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);}
+
+/* SECTION TITLE */
+.section-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:16px;font-weight:700;letter-spacing:0.5px;
+  text-transform:uppercase;color:var(--teal);
+  margin-bottom:12px;padding-bottom:8px;
+  border-bottom:2px solid var(--primary-dim);
+}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.empty-state{text-align:center;padding:48px 20px;color:var(--text-muted);}
+.empty-state .icon{font-size:36px;margin-bottom:10px;}
+.empty-state p{font-size:13px;}
+
+/* TAGS */
+.turma-badge{
+  display:inline-block;padding:2px 8px;border-radius:3px;
+  font-size:11px;font-weight:700;background:var(--teal-bg);
+  color:var(--teal);border:1px solid rgba(30,58,58,0.2);
+}
+
+/* ITENS PEDIDO */
+.itens-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+.item-row{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:6px;padding:8px 10px;
+}
+.item-row select,.item-row input{flex:1;min-width:0;}
+.item-remove{background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:2px;}
+
+/* FICHA PRINT */
+@media print {
+  #sidebar,#main,#modal-overlay-global,.topbar-actions{display:none!important;}
+  body{background:#fff!important;color:#000!important;margin:0;padding:0;}
+  #print-area{display:block!important;position:fixed;top:0;left:0;width:100%;z-index:99999;background:#fff;}
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+#print-area{display:none;}
+
+/* FICHA VISUAL */
+.ficha-print {
+  background:#fff;color:#000;padding:20mm 15mm;
+  font-family:Arial,sans-serif;font-size:10pt;
+  max-width:210mm;margin:auto;
+}
+.ficha-header{
+  display:flex;align-items:center;justify-content:space-between;
+  border:2px solid #1e3a3a;padding:8px 12px;margin-bottom:6px;
+  background:#1e3a3a;
+}
+.ficha-header .company{font-size:9pt;color:#fff;font-weight:bold;}
+.ficha-header .title{text-align:center;font-weight:bold;font-size:13pt;line-height:1.2;color:#fff;}
+.ficha-header .doc-info{text-align:right;font-size:8pt;color:rgba(255,255,255,0.7);}
+.ficha-emp-box{
+  border:1px solid #1e3a3a;padding:8px;
+  display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;
+  margin-bottom:6px;font-size:9pt;
+}
+.ficha-emp-box .field{border-bottom:1px solid #ccc;padding:2px 0;}
+.ficha-emp-box .field label{font-weight:bold;font-size:8pt;color:#1e3a3a;}
+.ficha-tbl{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:9pt;}
+.ficha-tbl th{background:#1e3a3a;color:#fff;padding:5px 8px;text-align:center;border:1px solid #1e3a3a;font-size:8pt;}
+.ficha-tbl td{padding:5px 8px;border:1px solid #aaa;text-align:center;min-height:20px;}
+.ficha-tbl tr:nth-child(even) td{background:#f9f9f9;}
+.ficha-legal{font-size:7.5pt;text-align:justify;margin-bottom:10px;line-height:1.4;border:1px solid #ccc;padding:8px;}
+.ficha-sig{display:flex;justify-content:space-around;margin-top:16px;}
+.sig-line{text-align:center;width:200px;}
+.sig-line .line{border-top:1px solid #333;margin-bottom:4px;}
+.sig-line small{font-size:8pt;color:#555;}
+
+/* SCROLL */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#aaa;}
+
+/* DRAG IMPORT */
+.drop-zone{
+  border:2px dashed var(--border);border-radius:8px;
+  padding:32px;text-align:center;color:var(--text-muted);
+  transition:all .2s;cursor:pointer;background:var(--surface);
+}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--primary);color:var(--primary);background:var(--primary-bg);}
+.drop-zone .icon{font-size:28px;margin-bottom:8px;}
+.drop-zone p{font-size:13px;}
+.drop-zone small{font-size:11px;color:var(--text-dim);}
+
+/* ESTOQUE INLINE EDIT */
+.qty-cell{display:flex;align-items:center;gap:6px;}
+.qty-cell input{
+  width:60px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:4px;color:var(--text);padding:3px 6px;font-size:12px;
+  text-align:center;
+}
+.qty-cell input:focus{outline:none;border-color:var(--primary);}
+
+/* RESPONSIVO */
+@media (max-width:900px){
+  .stat-cards{grid-template-columns:1fr 1fr;}
+  .charts-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sb-logo">
+    <div class="brand">⛏ UNI<span>MINA</span></div>
+    <div class="sub">Gerência de Operação Mina</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Principal</div>
+    <div class="sb-item active" onclick="navigate('dashboard')">
+      <span class="icon">📊</span>Dashboard
+    </div>
+    <div class="sb-item" onclick="navigate('pedidos')">
+      <span class="icon">📋</span>Pedidos
+    </div>
+    <div class="sb-item" onclick="navigate('fichas')">
+      <span class="icon">👤</span>Fichas
+    </div>
+    <div class="sb-item" onclick="navigate('movimentacoes')">
+      <span class="icon">🔄</span>Movimentações
+    </div>
+    <div class="sb-section">Operação</div>
+    <div class="sb-item" onclick="navigate('estoque')">
+      <span class="icon">📦</span>Estoque
+    </div>
+    <div class="sb-item" onclick="navigate('relatorios')">
+      <span class="icon">📄</span>Relatórios
+    </div>
+    <div class="sb-section">Configuração</div>
+    <div class="sb-item" onclick="navigate('importar')">
+      <span class="icon">⬆</span>Importar Excel
+    </div>
+    <div class="sb-item" onclick="navigate('funcionarios')">
+      <span class="icon">👥</span>Funcionários
+    </div>
+    <div class="sb-item" onclick="navigate('manual')">
+      <span class="icon">📖</span>Manual de Uso
+    </div>
+  </nav>
+  <div class="sb-footer">v1.0 <span style="background:#f59e0b;color:#000;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:800">DEMO</span> &nbsp;|&nbsp; <span>GitHub Pages</span></div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <div class="page-title" id="page-title">Dashboard</div>
+    <div class="topbar-actions" id="topbar-actions"></div>
+  </div>
+  <div class="content" id="app-content"></div>
+</div>
+
+<!-- GLOBAL MODAL -->
+<div class="modal-overlay" id="modal-overlay-global">
+  <div class="modal" id="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<!-- PRINT AREA -->
+<div id="print-area"></div>
+
+<script>
+// ─── DATA STORE ───────────────────────────────────────────────────
+const DB = {
+  get funcionarios(){ return JSON.parse(localStorage.getItem('um_func')||'[]'); },
+  set funcionarios(v){ localStorage.setItem('um_func', JSON.stringify(v)); },
+  get estoque(){ return JSON.parse(localStorage.getItem('um_estq')||'[]'); },
+  set estoque(v){ localStorage.setItem('um_estq', JSON.stringify(v)); },
+  get pedidos(){ return JSON.parse(localStorage.getItem('um_pedi')||'[]'); },
+  set pedidos(v){ localStorage.setItem('um_pedi', JSON.stringify(v)); },
+  get entregas(){ return JSON.parse(localStorage.getItem('um_entr')||'[]'); },
+  set entregas(v){ localStorage.setItem('um_entr', JSON.stringify(v)); },
+  get config(){ return JSON.parse(localStorage.getItem('um_cfg')||'{"empresa":"Stratos","cnpj":"","cidade":""}'); },
+  set config(v){ localStorage.setItem('um_cfg', JSON.stringify(v)); },
+  get requisicoes(){ return JSON.parse(localStorage.getItem('um_reqs')||'[]'); },
+  set requisicoes(v){ localStorage.setItem('um_reqs', JSON.stringify(v)); },
+};
+
+let currentPage = 'dashboard';
+let chartInstances = {};
+
+// ─── NAVIGATION ───────────────────────────────────────────────────
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('.sb-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(el => {
+    if (el.getAttribute('onclick')?.includes(`'${page}'`)) el.classList.add('active');
+  });
+  const titles = {
+    dashboard: 'Dashboard', pedidos: 'Pedidos de Uniforme',
+    fichas: 'Fichas de Colaboradores', movimentacoes: 'Movimentações de Entrega',
+    estoque: 'Controle de Estoque',
+    relatorios: 'Relatórios', importar: 'Importar Excel',
+    funcionarios: 'Funcionários', manual: 'Manual de Uso'
+  };
+  document.getElementById('page-title').textContent = titles[page] || page;
+  Object.values(chartInstances).forEach(c => { try { c.destroy(); } catch(e){} });
+  chartInstances = {};
+  render(page);
+}
+
+function render(page) {
+  const pages = {
+    dashboard, pedidos, fichas, movimentacoes, estoque, relatorios, importar, funcionarios, manual
+  };
+  const fn = pages[page];
+  if (fn) fn();
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────
+function $(id){ return document.getElementById(id); }
+function setContent(html){ $('app-content').innerHTML = html; }
+function setActions(html){ $('topbar-actions').innerHTML = html; }
+function fmtDate(d){ if(!d) return '—'; const dt = new Date(d); return dt.toLocaleDateString('pt-BR'); }
+function fmtMoney(v){ return 'R$ '+(+v||0).toFixed(2).replace('.',','); }
+function genId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function today(){ return new Date().toISOString().slice(0,10); }
+
+function openModal(title, body, footer='', large=false) {
+  $('modal-title').innerHTML = title;
+  $('modal-body').innerHTML = body;
+  $('modal-footer').innerHTML = footer || '<button class="btn btn-secondary" onclick="closeModal()">Fechar</button>';
+  $('modal-box').className = 'modal'+(large?' modal-lg':'');
+  $('modal-overlay-global').classList.add('show');
+}
+function closeModal(){ $('modal-overlay-global').classList.remove('show'); }
+$('modal-overlay-global').addEventListener('click', e => { if(e.target.id==='modal-overlay-global') closeModal(); });
+
+function toast(msg, type='success'){
+  const t = document.createElement('div');
+  const colors = {success:'#22c55e',danger:'#ef4444',warn:'#f97316',info:'#3b82f6'};
+  t.style.cssText = `position:fixed;bottom:20px;right:20px;z-index:9999;
+    padding:10px 16px;border-radius:6px;background:#1a1a1a;color:#fff;
+    border-left:3px solid ${colors[type]||colors.success};
+    font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.5);
+    animation:slideIn .2s ease;`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 3000);
+}
+
+// Turma color
+function turmaColor(t=''){
+  const colors = {
+    'A': '#f59e0b', 'B': '#3b82f6', 'C': '#22c55e',
+    'D': '#a855f7', 'E': '#f97316', 'I': '#ec4899', 'G': '#06b6d4'
+  };
+  const k = Object.keys(colors).find(k => t.includes('Turma '+k) || t.includes(k)) || 'A';
+  return colors[k];
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────
+function dashboard() {
+  const funcs = DB.funcionarios;
+  const estq = DB.estoque;
+  const peds = DB.pedidos;
+  const entr = DB.entregas;
+  const reqs = DB.requisicoes;
+
+  const pendentes = peds.filter(p=>p.status==='pendente').length;
+  const baixoEstq = estq.filter(e=>(e.estoque||0)<3).length;
+  
+  // Custo total por turma (entregas)
+  const custoTurma = {};
+  const custoCentro = {};
+  entr.forEach(e => {
+    const func = funcs.find(f=>f.matricula===e.matricula);
+    const turma = func?.turma || 'Sem Turma';
+    const cc = func?.centroCusto || 'Sem C.C.';
+    const total = (e.itens||[]).reduce((s,i)=>s+(+i.valor||0)*(+i.qtd||1),0);
+    custoTurma[turma] = (custoTurma[turma]||0) + total;
+    custoCentro[cc] = (custoCentro[cc]||0) + total;
+  });
+  const custoTotal = Object.values(custoTurma).reduce((s,v)=>s+v,0);
+  const topCC = Object.entries(custoCentro).sort((a,b)=>b[1]-a[1])[0];
+
+  // Custo requisições ao depósito
+  const custoReqs = reqs.reduce((s,r)=>{
+    return s + (r.itens||[]).reduce((ss,i)=>ss+(+i.valor||0)*(+i.qtdSolicitada||0),0);
+  }, 0);
+  const reqsPendentes = reqs.filter(r=>r.status==='pendente').length;
+
+  setActions(`<button class="btn btn-primary" onclick="navigate('pedidos')">+ Novo Pedido</button>`);
+  setContent(`
+    <div class="stat-cards">
+      <div class="stat-card amber">
+        <div class="stat-label">Funcionários</div>
+        <div class="stat-value">${funcs.length}</div>
+        <div class="stat-sub">cadastrados</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">Pedidos Pendentes</div>
+        <div class="stat-value">${pendentes}</div>
+        <div class="stat-sub">aguardando aprovação</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Estoque Baixo</div>
+        <div class="stat-value">${baixoEstq}</div>
+        <div class="stat-sub">itens críticos</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Custo Entregas</div>
+        <div class="stat-value">${fmtMoney(custoTotal)}</div>
+        <div class="stat-sub">total acumulado</div>
+      </div>
+    </div>
+
+    <div class="stat-cards" style="margin-top:-8px">
+      <div class="stat-card" style="border-left:3px solid #a855f7">
+        <div class="stat-label">Requisições ao Depósito</div>
+        <div class="stat-value" style="color:#a855f7">${reqs.length}</div>
+        <div class="stat-sub">${reqsPendentes} pendente(s)</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #06b6d4">
+        <div class="stat-label">Custo das Requisições</div>
+        <div class="stat-value" style="color:#06b6d4">${fmtMoney(custoReqs)}</div>
+        <div class="stat-sub">valor solicitado ao depósito</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid var(--primary)">
+        <div class="stat-label">Custo Total Geral</div>
+        <div class="stat-value" style="color:var(--primary)">${fmtMoney(custoTotal+custoReqs)}</div>
+        <div class="stat-sub">entregas + requisições</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid var(--teal)">
+        <div class="stat-label">Maior Centro de Custo</div>
+        <div class="stat-value" style="color:var(--teal);font-size:20px">${topCC?topCC[0]:'—'}</div>
+        <div class="stat-sub">${topCC?fmtMoney(topCC[1]):'sem dados'}</div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="card">
+        <div class="section-title">Custo por Turma</div>
+        <canvas id="chart-turma" height="200"></canvas>
+      </div>
+      <div class="card">
+        <div class="section-title">Custo por Centro de Custo</div>
+        <canvas id="chart-cc" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="card">
+        <div class="section-title">Status dos Pedidos</div>
+        <canvas id="chart-status" height="160"></canvas>
+      </div>
+      <div class="card">
+        <div class="section-title">Últimas Entregas</div>
+        ${entr.length===0?'<div class="empty-state" style="padding:24px"><p>Nenhuma entrega registrada.</p></div>':
+        `<div style="max-height:180px;overflow-y:auto"><table style="font-size:12px">
+          <thead><tr><th>Data</th><th>Colaborador</th><th>C.Custo</th><th>Valor</th></tr></thead>
+          <tbody>${[...entr].reverse().slice(0,8).map(e=>{
+            const f=funcs.find(f=>f.matricula===e.matricula);
+            const tot=(e.itens||[]).reduce((s,i)=>s+(+i.valor||0)*(+i.qtd||1),0);
+            return `<tr><td>${fmtDate(e.data)}</td><td>${e.nome}</td><td><small style="color:var(--primary);font-weight:600">${f?.centroCusto||'—'}</small></td><td style="font-weight:600">${fmtMoney(tot)}</td></tr>`;
+          }).join('')}</tbody>
+        </table></div>`}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Últimos Pedidos</div>
+      ${recentPedidos()}
+    </div>
+  `);
+
+  setTimeout(()=>{
+    // Chart turma
+    const turmas = Object.keys(custoTurma);
+    const ctx1 = $('chart-turma')?.getContext('2d');
+    if(ctx1 && turmas.length > 0) {
+      chartInstances.turma = new Chart(ctx1, {
+        type:'bar',
+        data:{
+          labels: turmas.map(t=>t.length>15?t.slice(0,15)+'…':t),
+          datasets:[{
+            label:'Custo (R$)',
+            data: turmas.map(t=>custoTurma[t]),
+            backgroundColor: turmas.map((_,i)=>`hsl(${i*45+38},80%,55%)`),
+            borderRadius:4,
+          }]
+        },
+        options:{
+          plugins:{legend:{display:false}},
+          scales:{
+            x:{ticks:{color:'#888',font:{size:11}},grid:{color:'#222'}},
+            y:{ticks:{color:'#888',font:{size:11},callback:v=>'R$'+v.toFixed(0)},grid:{color:'#222'}}
+          }
+        }
+      });
+    } else if(ctx1) {
+      $('chart-turma').parentElement.innerHTML += '<div style="color:var(--text-muted);text-align:center;padding:40px;font-size:13px">Nenhuma entrega registrada ainda</div>';
+    }
+
+    // Chart CC
+    const ccs = Object.keys(custoCentro);
+    const ctx3 = $('chart-cc')?.getContext('2d');
+    if(ctx3 && ccs.length > 0) {
+      chartInstances.cc = new Chart(ctx3, {
+        type:'bar',
+        data:{
+          labels: ccs,
+          datasets:[{
+            label:'Custo (R$)',
+            data: ccs.map(c=>custoCentro[c]),
+            backgroundColor: '#8B1A1A',
+            borderRadius:4,
+          }]
+        },
+        options:{
+          plugins:{legend:{display:false}},
+          scales:{
+            x:{ticks:{color:'#666',font:{size:11}},grid:{color:'#eee'}},
+            y:{ticks:{color:'#666',font:{size:11},callback:v=>'R$'+v.toFixed(0)},grid:{color:'#eee'}}
+          }
+        }
+      });
+    } else if(ctx3) {
+      $('chart-cc').parentElement.innerHTML += '<div style="color:var(--text-muted);text-align:center;padding:40px;font-size:13px">Nenhum Centro de Custo cadastrado ainda</div>';
+    }
+
+    // Chart status
+    const ctx2 = $('chart-status')?.getContext('2d');
+    if(ctx2) {
+      const statusCount = { pendente:0, aprovado:0, entregue:0 };
+      peds.forEach(p=> statusCount[p.status]=(statusCount[p.status]||0)+1);
+      chartInstances.status = new Chart(ctx2, {
+        type:'doughnut',
+        data:{
+          labels:['Pendentes','Aprovados','Entregues'],
+          datasets:[{
+            data:[statusCount.pendente,statusCount.aprovado,statusCount.entregue],
+            backgroundColor:['#f97316','#3b82f6','#22c55e'],
+            borderColor:'#181818',borderWidth:3
+          }]
+        },
+        options:{
+          plugins:{legend:{labels:{color:'#888',font:{size:12}}}},
+          cutout:'65%'
+        }
+      });
+    }
+  }, 100);
+}
+
+function recentPedidos(){
+  const peds = DB.pedidos.slice(-8).reverse();
+  if(!peds.length) return '<div class="empty-state"><div class="icon">📋</div><p>Nenhum pedido ainda.</p></div>';
+  return `<div class="tbl-wrap"><table>
+    <thead><tr><th>Data</th><th>Colaborador</th><th>Turma</th><th>Itens</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    ${peds.map(p=>`<tr>
+      <td>${fmtDate(p.data)}</td>
+      <td><strong>${p.nome}</strong><br><small style="color:var(--text-muted)">${p.matricula}</small></td>
+      <td><span class="turma-badge">${p.turma||'—'}</span></td>
+      <td>${(p.itens||[]).length} item(s)</td>
+      <td>${badgeStatus(p.status)}</td>
+      <td><button class="btn btn-sm btn-secondary" onclick="navigate('pedidos')">Ver</button></td>
+    </tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+function badgeStatus(s){
+  const m={pendente:'Pendente',aprovado:'Aprovado',entregue:'Entregue',parcial:'Parcial'};
+  const cls={pendente:'badge-pending',aprovado:'badge-approved',entregue:'badge-delivered',parcial:'badge-low'};
+  return `<span class="badge ${cls[s]||'badge-pending'}">${m[s]||s}</span>`;
+}
+
+// ─── PEDIDOS ──────────────────────────────────────────────────────
+function importarDoForms(){
+  openModal('📱 Importar Pedido do Forms',`
+    <div class="alert alert-info">
+      Cole abaixo o código recebido pelo WhatsApp. O sistema verifica o estoque e gera a ficha ou pedido ao armazém automaticamente!
+    </div>
+    <div class="form-group">
+      <label class="form-label">Código do pedido</label>
+      <textarea class="form-control" id="forms-codigo" rows="5"
+        placeholder="Cole aqui o código recebido..."
+        style="font-size:12px;font-family:monospace;word-break:break-all"></textarea>
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="importarEVerificarEstoque()">🔍 Importar e Verificar Estoque</button>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);text-align:center">
+      🔗 Formulário para funcionários:<br>
+      <strong style="color:var(--teal)">annenpe22-svg.github.io/uniforme-mina/form.html</strong>
+    </div>
+  `,`<button class="btn btn-secondary" onclick="closeModal()">Fechar</button>`);
+}
+
+function importarEVerificarEstoque(){
+  const raw = document.getElementById('forms-codigo')?.value?.trim();
+  if(!raw) return toast('Cole o código do funcionário!','danger');
+  const linhas = raw.split('\n').map(l=>l.trim());
+  const linhaCodigo = linhas.find(l=>l.startsWith('UNI:')||l.startsWith('UNIMINA:'));
+  if(!linhaCodigo) return toast('Código inválido! Copie o código completo.','danger');
+  try {
+    let pedido;
+    if(linhaCodigo.startsWith('UNI:')){
+      const mini = JSON.parse(decodeURIComponent(escape(atob(linhaCodigo.replace('UNI:','')))));
+      pedido = {
+        id:mini.id, matricula:mini.mat||'', nome:mini.nome, turma:mini.turma,
+        centroCusto:mini.cc, setor:mini.cc, solicitante:mini.sol,
+        matriculaSolicitante:mini.matSol, data:mini.data,
+        itens:(mini.itens||[]).map(i=>({nome:i.n,tamanho:i.t,qtd:i.q||1,obs:i.o})),
+        obs:mini.obs, codigoLegivel:mini.cod,
+        status:'pendente', origem:'forms', funcao:'', responsavel:''
+      };
+    } else {
+      pedido = JSON.parse(decodeURIComponent(escape(atob(linhaCodigo.replace('UNIMINA:','')))));
+    }
+    if(DB.pedidos.find(p=>p.id===pedido.id)){
+      closeModal(); navigate('pedidos');
+      return toast('Este pedido já foi importado antes!','warn');
+    }
+    // Verificar estoque
+    const estq = DB.estoque;
+    const verif = (pedido.itens||[]).map(item=>{
+      const row = estq.find(e=>
+        e.nome?.toLowerCase()===item.nome?.toLowerCase() &&
+        String(e.tamanho).toLowerCase()===String(item.tamanho||'').toLowerCase()
+      );
+      const disp = row ? Math.min(+row.estoque||0, +item.qtd||1) : 0;
+      return {...item, estoqueRow:row, estoqueAtual:+row?.estoque||0,
+        qtdDisponivel:disp, qtdFaltante:Math.max(0,(+item.qtd||1)-disp), temEstoque:disp>=(+item.qtd||1)};
+    });
+    const peds = DB.pedidos;
+    peds.push({...pedido, status:'pendente', verificacao:verif});
+    DB.pedidos = peds;
+    closeModal();
+    abrirResultadoEstoque(pedido.id, verif);
+  } catch(e){
+    console.error(e);
+    toast('Erro ao decodificar. Copie o código completo!','danger');
+  }
+}
+
+function abrirResultadoEstoque(pedidoId, verif){
+  const p = DB.pedidos.find(p=>p.id===pedidoId);
+  if(!p) return;
+  const itensCom = verif.filter(v=>v.qtdDisponivel>0);
+  const itensSem = verif.filter(v=>v.qtdFaltante>0);
+  const todosOk = verif.every(v=>v.temEstoque);
+  const algumOk = verif.some(v=>v.qtdDisponivel>0);
+
+  const alertHtml = todosOk
+    ? `<div class="alert alert-success">✅ Todos os itens disponíveis no estoque!</div>`
+    : algumOk
+    ? `<div class="alert alert-warn">⚠ Estoque parcial — ${itensCom.length} disponível(is), ${itensSem.length} precisa(m) de reposição.</div>`
+    : `<div class="alert alert-danger">❌ Nenhum item disponível. Necessário solicitar ao armazém.</div>`;
+
+  openModal(`📦 Verificação de Estoque — ${p.nome}`,`
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px">
+      <strong>${p.nome}</strong> | Mat: ${p.matricula} | Turma: ${p.turma||'—'} | C.C.: ${p.centroCusto||'—'}
+    </div>
+    ${alertHtml}
+    <div class="tbl-wrap" style="margin-bottom:14px"><table>
+      <thead><tr><th>Item</th><th>Tamanho</th><th>Pedido</th><th>Estoque</th><th>Disponível</th><th>Status</th></tr></thead>
+      <tbody>${verif.map(v=>`<tr>
+        <td>${v.nome}</td><td>${v.tamanho||'—'}</td>
+        <td style="text-align:center">${v.qtd||1}</td>
+        <td style="text-align:center;font-weight:bold;color:${v.estoqueAtual>0?'var(--success)':'var(--danger)'}">${v.estoqueAtual}</td>
+        <td style="text-align:center;font-weight:bold;color:${v.qtdDisponivel>0?'var(--success)':'var(--danger)'}">${v.qtdDisponivel}</td>
+        <td>${v.qtdFaltante>0?`<span class="badge badge-low">Falta ${v.qtdFaltante}</span>`:'<span class="badge badge-ok">OK</span>'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${itensCom.length>0?`<button class="btn btn-success" onclick="gerarEntregaDisponivel('${pedidoId}')">✅ Gerar Ficha de Entrega (${itensCom.length} item(s) disponível(is))</button>`:''}
+      ${itensSem.length>0?`<button class="btn btn-secondary" onclick="gerarSolicitacaoArmazem('${pedidoId}')">📤 Solicitar ao Armazém (${itensSem.length} item(s) em falta)</button>`:''}
+    </div>
+  `,`<button class="btn btn-secondary" onclick="closeModal();navigate('pedidos')">Ver em Pedidos</button>`,true);
+}
+
+function gerarEntregaDisponivel(pedidoId){
+  const p = DB.pedidos.find(p=>p.id===pedidoId);
+  if(!p) return;
+  const verif = p.verificacao || p.itens.map(i=>({...i,qtdDisponivel:i.qtd,qtdFaltante:0}));
+  const itensEntrega = verif.filter(v=>v.qtdDisponivel>0).map(v=>({...v,qtd:v.qtdDisponivel}));
+  // Baixar estoque
+  const estq = DB.estoque;
+  itensEntrega.forEach(item=>{
+    const row = estq.find(e=>e.nome===item.nome&&String(e.tamanho)===String(item.tamanho||''));
+    if(row) row.estoque = Math.max(0,(+row.estoque||0)-(+item.qtd||1));
+  });
+  DB.estoque = estq;
+  // Registrar na ficha do funcionário
+  const entr = DB.entregas;
+  entr.push({
+    id: genId(), matricula: p.matricula, nome: p.nome, turma: p.turma,
+    centroCusto: p.centroCusto, data: today(),
+    itens: itensEntrega.map(i=>{
+      const row = estq.find(e=>e.nome===i.nome&&String(e.tamanho)===String(i.tamanho||''));
+      return {...i, valor: row?.valor||0};
+    }),
+    pedidoId: p.id, origem: p.origem||'manual'
+  });
+  DB.entregas = entr;
+  // Atualizar pedido
+  const peds = DB.pedidos;
+  const idx = peds.findIndex(pp=>pp.id===pedidoId);
+  const faltantes = verif.filter(v=>v.qtdFaltante>0);
+  peds[idx].status = faltantes.length>0?'parcial':'entregue';
+  peds[idx].entregueEm = new Date().toISOString();
+  DB.pedidos = peds;
+  closeModal();
+  toast('✅ Entrega registrada na ficha! Abrindo ficha para impressão...');
+  setTimeout(()=>imprimirFicha(p.matricula), 400);
+}
+
+function gerarSolicitacaoArmazem(pedidoId){
+  const p = DB.pedidos.find(p=>p.id===pedidoId);
+  if(!p) return;
+  const verif = p.verificacao || p.itens.map(i=>({...i,qtdFaltante:i.qtd,estoqueAtual:0,estoqueRow:null}));
+  const itensFalt = verif.filter(v=>v.qtdFaltante>0);
+  const req = {
+    id: genId(),
+    numero: 'REQ-'+String(DB.requisicoes.length+1).padStart(4,'0'),
+    data: today(), origem:'forms', pedidoId: p.id,
+    colaborador: p.nome, matricula: p.matricula,
+    itens: itensFalt.map(i=>({
+      codigo:i.estoqueRow?.codigo||'', nome:i.nome, tamanho:i.tamanho||'',
+      estoqueAtual:i.estoqueAtual||0, valor:i.estoqueRow?.valor||0, qtdSolicitada:i.qtdFaltante
+    })),
+    obs:`Pedido via Forms — ${p.nome} (Mat. ${p.matricula}) — ${p.turma}`,
+    total: itensFalt.reduce((s,i)=>s+(i.estoqueRow?.valor||0)*i.qtdFaltante,0),
+    status:'pendente', criadoEm: new Date().toISOString()
+  };
+  const reqs = DB.requisicoes;
+  reqs.push(req);
+  DB.requisicoes = reqs;
+  closeModal();
+  toast(`📤 Requisição ${req.numero} gerada! Abrindo para impressão...`);
+  setTimeout(()=>imprimirRequisicao(req.id), 400);
+}
+
+function importarPorCodigo(){ importarEVerificarEstoque(); }
+function pedidos() {
+  setActions(`
+    <button class="btn btn-secondary" onclick="importarDoForms()">📱 Importar do Forms</button>
+    <button class="btn btn-primary" onclick="openNovoPedido()">+ Novo Pedido</button>
+  `);
+  renderPedidos();
+}
+
+function renderPedidos(){
+  const peds = DB.pedidos;
+  const filtered = pedFilter==='todos' ? peds : peds.filter(p=>p.status===pedFilter);
+  const sorted = [...filtered].reverse();
+
+  $('app-content').innerHTML = `
+    <div class="tabs">
+      <div class="tab ${pedFilter==='todos'?'active':''}" onclick="setPedFilter('todos')">Todos (${peds.length})</div>
+      <div class="tab ${pedFilter==='pendente'?'active':''}" onclick="setPedFilter('pendente')">Pendentes (${peds.filter(p=>p.status==='pendente').length})</div>
+      <div class="tab ${pedFilter==='aprovado'?'active':''}" onclick="setPedFilter('aprovado')">Aprovados (${peds.filter(p=>p.status==='aprovado').length})</div>
+      <div class="tab ${pedFilter==='entregue'?'active':''}" onclick="setPedFilter('entregue')">Entregues (${peds.filter(p=>p.status==='entregue').length})</div>
+    </div>
+    ${sorted.length===0?'<div class="empty-state"><div class="icon">📋</div><p>Nenhum pedido encontrado.</p></div>':`
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Data</th><th>Colaborador</th><th>Matrícula</th><th>Turma</th><th>Função</th><th>Itens</th><th>Status</th><th>Ações</th></tr></thead>
+      <tbody>
+      ${sorted.map((p,i)=>`<tr>
+        <td><small style="color:var(--text-muted)">${p.id?.slice(-4)||i+1}</small></td>
+        <td>${fmtDate(p.data)}</td>
+        <td><strong>${p.nome}</strong></td>
+        <td>${p.matricula}</td>
+        <td><span class="turma-badge">${p.turma||'—'}</span></td>
+        <td><small>${p.funcao||'—'}</small></td>
+        <td>${(p.itens||[]).length}</td>
+        <td>${badgeStatus(p.status)}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-xs btn-secondary" onclick="verPedido('${p.id}')">Ver</button>
+          ${p.status==='pendente'?`<button class="btn btn-xs btn-success" onclick="aprovarPedido('${p.id}')">✓ Aprovar</button>`:''}
+          ${p.status==='aprovado'?`<button class="btn btn-xs btn-primary" onclick="entregarPedido('${p.id}')">Entregar</button>`:''}
+          <button class="btn btn-xs btn-danger" onclick="deletePedido('${p.id}')">✕</button>
+        </td>
+      </tr>`).join('')}
+      </tbody>
+    </table></div>`}
+  `;
+}
+
+function setPedFilter(f){ pedFilter=f; renderPedidos(); }
+
+function openNovoPedido(){
+  const funcs = DB.funcionarios;
+  const estq = DB.estoque;
+  const funcOptions = funcs.map(f=>`<option value="${f.matricula}">${f.nome} — ${f.matricula}</option>`).join('');
+  const unifOptions = [...new Set(estq.map(e=>e.nome))].sort().map(n=>`<option value="${n}">${n}</option>`).join('');
+
+  openModal('Novo Pedido de Uniforme', `
+    <div class="form-group">
+      <label class="form-label">Colaborador</label>
+      <select class="form-control" id="ped-func" onchange="onPedFuncChange(this.value)">
+        <option value="">Selecione o colaborador...</option>
+        ${funcOptions}
+      </select>
+    </div>
+    <div id="ped-func-info" style="display:none" class="alert alert-info" style="margin-bottom:14px"></div>
+    <div class="form-group">
+      <label class="form-label">Data do Pedido</label>
+      <input type="date" class="form-control" id="ped-data" value="${today()}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Itens Solicitados</label>
+      <div id="itens-container" class="itens-list"></div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addItemPedido()">+ Adicionar Item</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observações</label>
+      <textarea class="form-control" id="ped-obs" rows="2" placeholder="Motivo, urgência..."></textarea>
+    </div>
+  `,`
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="savePedido()">Salvar Pedido</button>
+  `, true);
+  setTimeout(addItemPedido, 50);
+}
+
+function onPedFuncChange(mat){
+  const func = DB.funcionarios.find(f=>f.matricula===mat);
+  const info = $('ped-func-info');
+  if(func){
+    info.style.display='block';
+    info.innerHTML = `<strong>${func.nome}</strong> — ${func.funcao||''} | Turma: ${func.turma||'—'} | Responsável: ${func.responsavel||'—'}`;
+  } else {
+    info.style.display='none';
+  }
+}
+
+let itemIdx=0;
+function addItemPedido(){
+  const estq = DB.estoque;
+  const nomes = [...new Set(estq.map(e=>e.nome))].sort();
+  const idx = itemIdx++;
+  const div = document.createElement('div');
+  div.className='item-row';
+  div.id=`item-row-${idx}`;
+  div.innerHTML=`
+    <select class="form-control" id="item-nome-${idx}" onchange="updateItemTamanhos(${idx})" style="flex:2">
+      <option value="">Item...</option>
+      ${nomes.map(n=>`<option value="${n}">${n}</option>`).join('')}
+    </select>
+    <select class="form-control" id="item-tam-${idx}" style="flex:1">
+      <option value="">Tamanho</option>
+    </select>
+    <input type="number" class="form-control" id="item-qtd-${idx}" value="1" min="1" style="width:60px;flex:none" placeholder="Qtd">
+    <button class="item-remove" onclick="$('item-row-${idx}').remove()">✕</button>
+  `;
+  $('itens-container').appendChild(div);
+}
+
+function updateItemTamanhos(idx){
+  const nome = $(`item-nome-${idx}`).value;
+  const estq = DB.estoque.filter(e=>e.nome===nome);
+  const sel = $(`item-tam-${idx}`);
+  sel.innerHTML = '<option value="">Tamanho</option>' +
+    estq.map(e=>`<option value="${e.tamanho}" data-estq="${e.estoque||0}">${e.tamanho} (estq: ${e.estoque||0})</option>`).join('');
+}
+
+function savePedido(){
+  const mat = $('ped-func').value;
+  const data = $('ped-data').value;
+  if(!mat) return toast('Selecione o colaborador!','danger');
+
+  const func = DB.funcionarios.find(f=>f.matricula===mat);
+  const itens = [];
+  document.querySelectorAll('.item-row').forEach(row=>{
+    const idx = row.id.replace('item-row-','');
+    const nome = $(`item-nome-${idx}`)?.value;
+    const tam = $(`item-tam-${idx}`)?.value;
+    const qtd = +$(`item-qtd-${idx}`)?.value||1;
+    if(nome) itens.push({nome, tamanho:tam, qtd});
+  });
+  if(!itens.length) return toast('Adicione pelo menos um item!','danger');
+
+  const peds = DB.pedidos;
+  peds.push({
+    id: genId(),
+    matricula: mat,
+    nome: func?.nome||mat,
+    turma: func?.turma||'',
+    funcao: func?.funcao||'',
+    responsavel: func?.responsavel||'',
+    data,
+    itens,
+    obs: $('ped-obs').value,
+    status: 'pendente',
+    criadoEm: new Date().toISOString()
+  });
+  DB.pedidos = peds;
+  closeModal();
+  toast('Pedido registrado!');
+  renderPedidos();
+}
+
+function verPedido(id){
+  const p = DB.pedidos.find(p=>p.id===id);
+  if(!p) return;
+  openModal(`Pedido #${p.id.slice(-6)}`,`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div><label class="form-label">Colaborador</label><div>${p.nome}</div></div>
+      <div><label class="form-label">Matrícula</label><div>${p.matricula}</div></div>
+      <div><label class="form-label">Turma</label><div>${p.turma||'—'}</div></div>
+      <div><label class="form-label">Data</label><div>${fmtDate(p.data)}</div></div>
+      <div><label class="form-label">Status</label><div>${badgeStatus(p.status)}</div></div>
+      <div><label class="form-label">Obs</label><div>${p.obs||'—'}</div></div>
+    </div>
+    <div class="section-title">Itens</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Item</th><th>Tamanho</th><th>Qtd</th></tr></thead>
+      <tbody>${(p.itens||[]).map(i=>`<tr><td>${i.nome}</td><td>${i.tamanho||'—'}</td><td>${i.qtd}</td></tr>`).join('')}</tbody>
+    </table></div>
+  `);
+}
+
+function aprovarPedido(id){
+  const peds = DB.pedidos;
+  const p = peds.find(p=>p.id===id);
+  if(p){ p.status='aprovado'; DB.pedidos=peds; renderPedidos(); toast('Pedido aprovado!'); }
+}
+
+function entregarPedido(id){
+  const peds = DB.pedidos;
+  const p = peds.find(p=>p.id===id);
+  if(!p) return;
+
+  // Baixar estoque
+  const estq = DB.estoque;
+  const alertas = [];
+  (p.itens||[]).forEach(item=>{
+    const row = estq.find(e=>e.nome===item.nome && e.tamanho==item.tamanho);
+    if(row){
+      row.estoque = Math.max(0,(+row.estoque||0)-(+item.qtd||1));
+      if(row.estoque < 3) alertas.push(`${item.nome} (${item.tamanho}): ${row.estoque} restantes`);
+    }
+  });
+  DB.estoque = estq;
+
+  // Registrar entrega
+  const entr = DB.entregas;
+  const func = DB.funcionarios.find(f=>f.matricula===p.matricula);
+  entr.push({
+    id: genId(),
+    matricula: p.matricula,
+    nome: p.nome,
+    turma: p.turma,
+    data: today(),
+    itens: (p.itens||[]).map(i=>{
+      const row = estq.find(e=>e.nome===i.nome&&e.tamanho==i.tamanho);
+      return {...i, valor: row?.valor||0};
+    }),
+    pedidoId: p.id
+  });
+  DB.entregas = entr;
+
+  p.status='entregue';
+  p.entregueEm = new Date().toISOString();
+  DB.pedidos = peds;
+
+  if(alertas.length) toast(`⚠ Estoque baixo: ${alertas[0]}`,'warn');
+  else toast('Uniforme entregue e estoque atualizado!');
+  renderPedidos();
+}
+
+function deletePedido(id){
+  if(!confirm('Excluir este pedido?')) return;
+  DB.pedidos = DB.pedidos.filter(p=>p.id!==id);
+  renderPedidos();
+  toast('Pedido excluído.','warn');
+}
+
+// ─── FICHAS ───────────────────────────────────────────────────────
+function fichas(){
+  setActions(`<div class="search-box"><span class="icon">🔍</span><input type="text" id="fichas-search" placeholder="Buscar por nome ou matrícula..." oninput="renderFichasList()"></div>`);
+  $('app-content').innerHTML = '<div id="fichas-list"></div>';
+  renderFichasList();
+}
+
+function renderFichasList(){
+  const q = ($('fichas-search')?.value||'').toLowerCase();
+  const funcs = DB.funcionarios.filter(f=>
+    !q || f.nome?.toLowerCase().includes(q) || f.matricula?.includes(q)
+  );
+
+  if(!funcs.length){
+    $('fichas-list').innerHTML='<div class="empty-state"><div class="icon">👤</div><p>Nenhum colaborador encontrado.</p></div>';
+    return;
+  }
+
+  $('fichas-list').innerHTML = `<div class="tbl-wrap"><table>
+    <thead><tr><th>Matrícula</th><th>Nome</th><th>Turma</th><th>Função</th><th>Responsável</th><th>Entregas</th><th>Ações</th></tr></thead>
+    <tbody>
+    ${funcs.map(f=>{
+      const entr = DB.entregas.filter(e=>e.matricula===f.matricula);
+      return `<tr>
+        <td>${f.matricula}</td>
+        <td><strong>${f.nome}</strong></td>
+        <td><span class="turma-badge">${f.turma||'—'}</span></td>
+        <td><small>${f.funcao||'—'}</small></td>
+        <td><small>${f.responsavel||'—'}</small></td>
+        <td>${entr.length} entrega(s)</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-xs btn-secondary" onclick="verFicha('${f.matricula}')">Ver Ficha</button>
+          <button class="btn btn-xs btn-primary" onclick="imprimirFicha('${f.matricula}')">🖨 Imprimir</button>
+        </td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>`;
+}
+
+function verFicha(mat){
+  const func = DB.funcionarios.find(f=>f.matricula===mat);
+  if(!func) return;
+  const entr = DB.entregas.filter(e=>e.matricula===mat);
+
+  openModal(`Ficha: ${func.nome}`, `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div><label class="form-label">Matrícula</label><div>${func.matricula}</div></div>
+      <div><label class="form-label">Turma</label><div><span class="turma-badge">${func.turma||'—'}</span></div></div>
+      <div><label class="form-label">Função</label><div>${func.funcao||'—'}</div></div>
+      <div><label class="form-label">Responsável</label><div>${func.responsavel||'—'}</div></div>
+    </div>
+    <div class="section-title">Histórico de Entregas (${entr.length})</div>
+    ${entr.length===0?'<div class="empty-state" style="padding:24px"><p>Nenhuma entrega registrada.</p></div>':`
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Data</th><th>Item</th><th>Tamanho</th><th>Qtd</th><th>Valor</th><th></th></tr></thead>
+      <tbody>
+      ${entr.map(e=>(e.itens||[]).map(i=>`<tr>
+        <td>${fmtDate(e.data)}</td><td>${i.nome}</td>
+        <td>${i.tamanho||'—'}</td><td>${i.qtd||1}</td>
+        <td>${fmtMoney((+i.valor||0)*(+i.qtd||1))}</td>
+        <td><button class="btn btn-xs btn-danger" onclick="excluirEntrega('${e.id}','${mat}')">✕</button></td>
+      </tr>`).join('')).join('')}
+      </tbody>
+    </table></div>`}
+  `,`
+    <button class="btn btn-secondary" onclick="closeModal()">Fechar</button>
+    <button class="btn btn-primary" onclick="closeModal();imprimirFicha('${mat}')">🖨 Imprimir Ficha</button>
+  `, true);
+}
+
+function excluirEntrega(id, mat){
+  if(!confirm('Excluir esta entrega? O estoque NÃO será estornado automaticamente.')) return;
+  DB.entregas = DB.entregas.filter(e=>e.id!==id);
+  toast('Entrega excluída.','warn');
+  closeModal();
+  // Reabrir ficha atualizada
+  setTimeout(()=>verFicha(mat), 200);
+}
+
+// ─── MOVIMENTAÇÕES ────────────────────────────────────────────────
+function movimentacoes(){
+  setActions(`
+    <div class="search-box"><span class="icon">🔍</span><input type="text" id="mov-search" placeholder="Buscar por nome ou item..." oninput="renderMovimentacoes()"></div>
+  `);
+  $('app-content').innerHTML = '<div id="mov-content"></div>';
+  renderMovimentacoes();
+}
+
+function renderMovimentacoes(){
+  const q = ($('mov-search')?.value||'').toLowerCase();
+  const entr = [...DB.entregas].reverse();
+  const funcs = DB.funcionarios;
+
+  const filtered = entr.filter(e=>
+    !q ||
+    e.nome?.toLowerCase().includes(q) ||
+    e.matricula?.includes(q) ||
+    (e.itens||[]).some(i=>i.nome?.toLowerCase().includes(q))
+  );
+
+  if(!filtered.length){
+    $('mov-content').innerHTML=`<div class="empty-state"><div class="icon">🔄</div><p>Nenhuma movimentação encontrada.</p></div>`;
+    return;
+  }
+
+  $('mov-content').innerHTML = `
+    <div class="alert alert-warn" style="margin-bottom:16px">
+      ⚠ A exclusão de uma entrega <strong>não estorna o estoque</strong> automaticamente. Ajuste manualmente se necessário.
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>Data</th><th>Colaborador</th><th>Matrícula</th><th>Turma</th><th>C.C.</th><th>Itens</th><th>Total</th><th>Ações</th>
+      </tr></thead>
+      <tbody>
+      ${filtered.map(e=>{
+        const func = funcs.find(f=>f.matricula===e.matricula);
+        const total = (e.itens||[]).reduce((s,i)=>s+(+i.valor||0)*(+i.qtd||1),0);
+        const itensStr = (e.itens||[]).map(i=>i.nome+(i.tamanho?' ('+i.tamanho+')':'')).join(', ');
+        return `<tr>
+          <td>${fmtDate(e.data)}</td>
+          <td><strong>${e.nome}</strong></td>
+          <td><small>${e.matricula}</small></td>
+          <td><span class="turma-badge">${e.turma||'—'}</span></td>
+          <td><small style="color:var(--primary);font-weight:600">${func?.centroCusto||e.centroCusto||'—'}</small></td>
+          <td><small style="color:var(--text-muted)">${itensStr.length>50?itensStr.slice(0,50)+'...':itensStr}</small></td>
+          <td style="font-weight:600">${fmtMoney(total)}</td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-xs btn-secondary" onclick="verDetalheEntrega('${e.id}')">Ver</button>
+            <button class="btn btn-xs btn-danger" onclick="excluirEntregaLista('${e.id}')">✕ Excluir</button>
+          </td>
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table></div>
+    <div style="color:var(--text-muted);font-size:12px;margin-top:10px">${filtered.length} entrega(s) — Total: ${fmtMoney(filtered.reduce((s,e)=>{return s+(e.itens||[]).reduce((ss,i)=>ss+(+i.valor||0)*(+i.qtd||1),0)},0))}</div>
+  `;
+}
+
+function verDetalheEntrega(id){
+  const e = DB.entregas.find(e=>e.id===id);
+  if(!e) return;
+  const total = (e.itens||[]).reduce((s,i)=>s+(+i.valor||0)*(+i.qtd||1),0);
+  openModal(`Entrega — ${e.nome}`,`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:14px">
+      <div><label class="form-label">Colaborador</label>${e.nome}</div>
+      <div><label class="form-label">Matrícula</label>${e.matricula}</div>
+      <div><label class="form-label">Data</label>${fmtDate(e.data)}</div>
+      <div><label class="form-label">Turma</label><span class="turma-badge">${e.turma||'—'}</span></div>
+    </div>
+    <div class="section-title">Itens Entregues</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Item</th><th>Tamanho</th><th>Qtd</th><th>Valor Unit.</th><th>Total</th></tr></thead>
+      <tbody>
+      ${(e.itens||[]).map(i=>`<tr>
+        <td>${i.nome}</td><td>${i.tamanho||'—'}</td><td>${i.qtd||1}</td>
+        <td>${fmtMoney(i.valor)}</td>
+        <td style="font-weight:bold">${fmtMoney((+i.valor||0)*(+i.qtd||1))}</td>
+      </tr>`).join('')}
+      <tr style="background:var(--surface2)">
+        <td colspan="4" style="text-align:right;font-weight:bold">Total:</td>
+        <td style="font-weight:bold;color:var(--primary)">${fmtMoney(total)}</td>
+      </tr>
+      </tbody>
+    </table></div>
+  `,`
+    <button class="btn btn-secondary" onclick="closeModal()">Fechar</button>
+    <button class="btn btn-danger" onclick="closeModal();excluirEntregaLista('${id}')">✕ Excluir Entrega</button>
+  `, true);
+}
+
+function excluirEntregaLista(id){
+  if(!confirm('Excluir esta entrega?\n\n⚠ O estoque NÃO será estornado automaticamente.')) return;
+  DB.entregas = DB.entregas.filter(e=>e.id!==id);
+  toast('Entrega excluída.','warn');
+  renderMovimentacoes();
+}
+
+// ─── ESTOQUE ──────────────────────────────────────────────────────
+let estqFilter = '';
+function estoque(){
+  setActions(`
+    <div class="search-box"><span class="icon">🔍</span><input type="text" id="estq-search" placeholder="Buscar item..." oninput="renderEstoque()"></div>
+    <button class="btn btn-secondary" onclick="solicitarDeposito()">📤 Solicitar Depósito</button>
+    <button class="btn btn-primary" onclick="addItemEstoque()">+ Novo Item</button>
+  `);
+  $('app-content').innerHTML = '<div id="estq-content"></div>';
+  renderEstoque();
+}
+
+function renderEstoque(){
+  const q = ($('estq-search')?.value||'').toLowerCase();
+  const items = DB.estoque.filter(e=>!q||e.nome?.toLowerCase().includes(q)||String(e.tamanho).toLowerCase().includes(q));
+  const sorted = [...items].sort((a,b)=>(a.nome>b.nome?1:-1));
+
+  const baixo = sorted.filter(e=>(+e.estoque||0)<3);
+
+  $('estq-content').innerHTML = `
+    ${baixo.length?`<div class="alert alert-danger">⚠ ${baixo.length} item(s) com estoque crítico (< 3 unidades): ${baixo.slice(0,3).map(e=>e.nome+' '+e.tamanho).join(', ')}${baixo.length>3?'...':''}</div>`:''}
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Código</th><th>Item</th><th>Tamanho</th><th>Valor Unit.</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead>
+      <tbody>
+      ${sorted.length===0?`<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px">Nenhum item encontrado.</td></tr>`:''}
+      ${sorted.map(e=>{
+        const qty = +e.estoque||0;
+        const badge = qty===0?'<span class="badge badge-empty">Sem estoque</span>':qty<3?'<span class="badge badge-low">Crítico</span>':'<span class="badge badge-ok">OK</span>';
+        return `<tr>
+          <td><small style="color:var(--text-muted)">${e.codigo||'—'}</small></td>
+          <td><strong>${e.nome}</strong></td>
+          <td>${e.tamanho||'—'}</td>
+          <td><input type="number" class="form-control" style="width:90px;padding:4px 6px" value="${(+e.valor||0).toFixed(2)}" onchange="updateEstqValor('${e.codigo||e.nome+e.tamanho}',this.value,'valor')" step="0.01"></td>
+          <td><div class="qty-cell"><input type="number" value="${qty}" min="0" onchange="updateEstqQty('${e.codigo||e.nome+e.tamanho}',this.value)"><span style="color:var(--text-muted);font-size:11px">un</span></div></td>
+          <td>${badge}</td>
+          <td><button class="btn btn-xs btn-danger" onclick="deleteEstqItem('${e.codigo||e.nome+e.tamanho}')">✕</button></td>
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table></div>
+  `;
+}
+
+function updateEstqQty(key, val){
+  const estq = DB.estoque;
+  const item = estq.find(e=>(e.codigo||e.nome+e.tamanho)===key);
+  if(item){ item.estoque = +val; DB.estoque=estq; toast('Estoque atualizado!'); renderEstoque(); }
+}
+function updateEstqValor(key, val){
+  const estq = DB.estoque;
+  const item = estq.find(e=>(e.codigo||e.nome+e.tamanho)===key);
+  if(item){ item.valor = +val; DB.estoque=estq; }
+}
+function deleteEstqItem(key){
+  if(!confirm('Excluir este item?')) return;
+  DB.estoque = DB.estoque.filter(e=>(e.codigo||e.nome+e.tamanho)!==key);
+  renderEstoque();
+}
+function addItemEstoque(){
+  openModal('Novo Item de Estoque',`
+    <div class="form-grid form-grid-2">
+      <div class="form-group"><label class="form-label">Código</label><input class="form-control" id="ni-cod" placeholder="7012345"></div>
+      <div class="form-group"><label class="form-label">Nome do Item *</label><input class="form-control" id="ni-nome" placeholder="Calça Operacional"></div>
+      <div class="form-group"><label class="form-label">Tamanho</label><input class="form-control" id="ni-tam" placeholder="42"></div>
+      <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-control" type="number" id="ni-val" step="0.01" placeholder="0.00"></div>
+      <div class="form-group"><label class="form-label">Qtd Estoque</label><input class="form-control" type="number" id="ni-qty" value="0" min="0"></div>
+    </div>
+  `,`
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveNewItem()">Salvar</button>
+  `);
+}
+function saveNewItem(){
+  const nome = $('ni-nome').value.trim();
+  if(!nome) return toast('Nome obrigatório!','danger');
+  const estq = DB.estoque;
+  estq.push({
+    codigo: $('ni-cod').value, nome,
+    tamanho: $('ni-tam').value,
+    valor: +$('ni-val').value||0,
+    estoque: +$('ni-qty').value||0
+  });
+  DB.estoque=estq;
+  closeModal();
+  toast('Item adicionado!');
+  renderEstoque();
+}
+function solicitarDeposito(){
+  const estq = DB.estoque;
+  if(!estq.length) return toast('Nenhum item no estoque cadastrado. Importe o estoque primeiro!','danger');
+
+  const criticos = estq.filter(e=>(+e.estoque||0)<3);
+
+  const linhas = estq.map((e,i)=>{
+    const isCrit = (+e.estoque||0)<3;
+    return `<tr style="${isCrit?'background:rgba(192,57,43,0.05)':''}">
+    <td><input type="checkbox" id="dep-chk-${i}" ${isCrit?'checked':''}></td>
+    <td><small>${e.codigo||'—'}</small></td>
+    <td>${e.nome}</td>
+    <td>${e.tamanho||'—'}</td>
+    <td style="${isCrit?'color:var(--danger);font-weight:bold':''}">${e.estoque||0}</td>
+    <td>${fmtMoney(e.valor)}</td>
+    <td><input type="number" class="form-control" style="width:70px;padding:4px 6px" value="${isCrit?10:0}" min="0" id="dep-qty-${i}"></td>
+    <td id="dep-total-${i}">${fmtMoney((+e.valor||0)*(isCrit?10:0))}</td>
+  </tr>`;}).join('');
+
+  openModal('📤 Solicitar Reposição ao Depósito',`
+    ${criticos.length?`<div class="alert alert-danger">⚠ ${criticos.length} item(s) com estoque crítico (< 3) já marcados automaticamente.</div>`:'<div class="alert alert-info">Selecione os itens e quantidades a solicitar ao depósito.</div>'}
+    <div style="max-height:360px;overflow-y:auto">
+    <table style="width:100%;border-collapse:collapse;background:var(--surface)">
+      <thead style="position:sticky;top:0">
+        <tr>
+          <th style="background:var(--teal);color:#fff;padding:8px;width:30px">✓</th>
+          <th style="background:var(--teal);color:#fff;padding:8px">Código</th>
+          <th style="background:var(--teal);color:#fff;padding:8px">Item</th>
+          <th style="background:var(--teal);color:#fff;padding:8px">Tam.</th>
+          <th style="background:var(--teal);color:#fff;padding:8px">Estq.</th>
+          <th style="background:var(--teal);color:#fff;padding:8px">Valor</th>
+          <th style="background:var(--teal);color:#fff;padding:8px">Qtd.</th>
+          <th style="background:var(--teal);color:#fff;padding:8px">Total</th>
+        </tr>
+      </thead>
+      <tbody id="dep-tbody">${linhas}</tbody>
+      <tfoot><tr>
+        <td colspan="7" style="text-align:right;font-weight:bold;padding:8px 12px;border-top:2px solid var(--border)">TOTAL DA REQUISIÇÃO:</td>
+        <td id="dep-grand-total" style="font-weight:bold;color:var(--primary);padding:8px 12px;border-top:2px solid var(--border)">${fmtMoney(criticos.reduce((s,e)=>s+(+e.valor||0)*10,0))}</td>
+      </tr></tfoot>
+    </table></div>
+    <div class="form-group" style="margin-top:14px">
+      <label class="form-label">Observações / Urgência</label>
+      <textarea class="form-control" id="dep-obs" rows="2" placeholder="Ex: Urgente — turma A em campo na próxima semana..."></textarea>
+    </div>
+  `,`
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="confirmarRequisicao()">📤 Registrar e Imprimir Requisição</button>
+  `, true);
+
+  // Atualizar totais ao mudar qtd
+  setTimeout(()=>{
+    estq.forEach((e,i)=>{
+      const input = $(`dep-qty-${i}`);
+      if(input) input.addEventListener('input', ()=>{
+        const v = (+input.value||0)*(+e.valor||0);
+        const td = $(`dep-total-${i}`);
+        if(td) td.textContent = fmtMoney(v);
+        // recalc grand total
+        let grand = 0;
+        estq.forEach((_,j)=>{
+          const chk = $(`dep-chk-${j}`);
+          const inp = $(`dep-qty-${j}`);
+          if(chk?.checked) grand += (+inp?.value||0)*(+estq[j].valor||0);
+        });
+        const gt = $('dep-grand-total');
+        if(gt) gt.textContent = fmtMoney(grand);
+      });
+    });
+    window._reqEstq = estq;
+  }, 50);
+}
+
+function confirmarRequisicao(){
+  const estq = window._reqEstq || DB.estoque;
+  const itens = [];
+  estq.forEach((e,i)=>{
+    const chk = $(`dep-chk-${i}`);
+    const qty = +($(`dep-qty-${i}`)?.value||0);
+    if(chk?.checked && qty > 0){
+      itens.push({
+        codigo: e.codigo,
+        nome: e.nome,
+        tamanho: e.tamanho,
+        estoqueAtual: +e.estoque||0,
+        valor: +e.valor||0,
+        qtdSolicitada: qty
+      });
+    }
+  });
+  if(!itens.length) return toast('Selecione pelo menos um item com quantidade!','danger');
+  const obs = $('dep-obs')?.value||'';
+  const totalReq = itens.reduce((s,i)=>s+(i.valor*i.qtdSolicitada),0);
+
+  const req = {
+    id: genId(),
+    numero: 'REQ-'+String(DB.requisicoes.length+1).padStart(4,'0'),
+    data: today(),
+    itens,
+    obs,
+    total: totalReq,
+    status: 'pendente',
+    criadoEm: new Date().toISOString()
+  };
+
+  const reqs = DB.requisicoes;
+  reqs.push(req);
+  DB.requisicoes = reqs;
+
+  closeModal();
+  toast(`Requisição ${req.numero} registrada! Abrindo para impressão...`);
+  setTimeout(()=>imprimirRequisicao(req.id), 400);
+}
+
+function imprimirRequisicao(id){
+  const req = DB.requisicoes.find(r=>r.id===id);
+  if(!req) return;
+  const cfg = DB.config;
+  const hoje = new Date(req.data+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+
+  const html = `<div class="ficha-print">
+    <div class="ficha-header">
+      <div class="company" style="font-weight:bold;font-size:11pt">${cfg.empresa||'STRATOS'}</div>
+      <div class="title" style="font-size:14pt">REQUISIÇÃO DE MATERIAL AO DEPÓSITO<br>
+        <small style="font-size:9pt;font-weight:normal">Controle de Uniformes — Operação Mina</small></div>
+      <div class="doc-info">Nº: <strong>${req.numero}</strong><br>Data: ${fmtDate(req.data)}</div>
+    </div>
+
+    <div class="ficha-emp-box" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:10px">
+      <div class="field"><label>Setor Solicitante:</label><br>Gerência de Operação Mina</div>
+      <div class="field"><label>Data da Solicitação:</label><br>${hoje}</div>
+      <div class="field"><label>Status:</label><br><strong>${req.status.toUpperCase()}</strong></div>
+    </div>
+
+    <table class="ficha-tbl">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Descrição do Item</th>
+          <th>Tamanho</th>
+          <th>Estq. Atual</th>
+          <th>Qtd. Solicitada</th>
+          <th>Valor Unit.</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+      ${req.itens.map(i=>`<tr>
+        <td>${i.codigo||'—'}</td>
+        <td style="text-align:left">${i.nome}</td>
+        <td>${i.tamanho||'—'}</td>
+        <td style="color:#c00;font-weight:bold">${i.estoqueAtual}</td>
+        <td style="font-weight:bold">${i.qtdSolicitada}</td>
+        <td>R$ ${(+i.valor).toFixed(2).replace('.',',')}</td>
+        <td style="font-weight:bold">R$ ${((+i.valor)*(+i.qtdSolicitada)).toFixed(2).replace('.',',')}</td>
+      </tr>`).join('')}
+      </tbody>
+      <tfoot>
+        <tr style="background:#f0f0f0">
+          <td colspan="6" style="text-align:right;font-weight:bold;padding:6px 8px">VALOR TOTAL DA REQUISIÇÃO:</td>
+          <td style="font-weight:bold;font-size:11pt;padding:6px 8px">R$ ${req.total.toFixed(2).replace('.',',')}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    ${req.obs?`<div style="margin:10px 0;padding:8px;border:1px solid #ccc;font-size:9pt"><strong>Observações:</strong> ${req.obs}</div>`:''}
+
+    <div style="font-size:8pt;color:#555;margin:10px 0">
+      Esta requisição foi gerada automaticamente pelo sistema UniMina em ${new Date(req.criadoEm).toLocaleString('pt-BR')}.
+    </div>
+
+    <div class="ficha-sig" style="margin-top:24px">
+      <div class="sig-line">
+        <div class="line"></div>
+        <div><strong>Solicitante</strong></div>
+        <small>Responsável pelo Setor</small>
+      </div>
+      <div class="sig-line">
+        <div class="line"></div>
+        <div><strong>Depósito / Almoxarifado</strong></div>
+        <small>Recebimento e Conferência</small>
+      </div>
+      <div class="sig-line">
+        <div class="line"></div>
+        <div><strong>Aprovação</strong></div>
+        <small>Gerência / Supervisão</small>
+      </div>
+    </div>
+  </div>`;
+
+  const printArea = $('print-area');
+  printArea.innerHTML = html;
+  printArea.style.cssText = 'display:block !important;';
+  $('app-content').style.display='none';
+  setTimeout(()=>{
+    window.print();
+    setTimeout(()=>{
+      printArea.style.cssText = 'display:none;';
+      $('app-content').style.display='';
+    }, 500);
+  }, 500);
+}
+
+// ─── RELATÓRIOS ───────────────────────────────────────────────────
+function relatorios(){
+  setActions('');
+  setContent(`
+    <div class="form-grid form-grid-2" style="gap:16px;margin-bottom:20px">
+      <div class="card" style="cursor:pointer;transition:all .2s" onclick="gerarFichaEntrega()" onmouseover="this.style.borderColor='var(--amber)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:28px;margin-bottom:8px">📄</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700">Ficha de Entrega de Uniforme</div>
+        <div style="color:var(--text-muted);font-size:12px;margin-top:4px">NR-01, NR-06 e CLT — Individual por colaborador</div>
+      </div>
+      <div class="card" style="cursor:pointer;transition:all .2s" onclick="relatorioCustoTurma()" onmouseover="this.style.borderColor='var(--amber)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:28px;margin-bottom:8px">📊</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700">Custo por Turma</div>
+        <div style="color:var(--text-muted);font-size:12px;margin-top:4px">Total de gastos agrupados por turma e centro de custo</div>
+      </div>
+      <div class="card" style="cursor:pointer;transition:all .2s" onclick="relatorioEstoque()" onmouseover="this.style.borderColor='var(--amber)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:28px;margin-bottom:8px">📦</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700">Posição de Estoque</div>
+        <div style="color:var(--text-muted);font-size:12px;margin-top:4px">Inventário completo com itens críticos destacados</div>
+      </div>
+      <div class="card" style="cursor:pointer;transition:all .2s" onclick="relatorioRequisicoes()" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:28px;margin-bottom:8px">📤</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700">Requisições ao Depósito</div>
+        <div style="color:var(--text-muted);font-size:12px;margin-top:4px">Histórico e reimpressão das requisições geradas</div>
+      </div>
+      <div class="card" style="cursor:pointer;transition:all .2s" onclick="relatorioCentroCusto()" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:28px;margin-bottom:8px">💰</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700">Custo por Centro de Custo</div>
+        <div style="color:var(--text-muted);font-size:12px;margin-top:4px">Gastos diários e totais — imprimível por C.C.</div>
+      </div>
+    </div>
+    <div id="relatorio-preview"></div>
+  `);
+}
+
+function gerarFichaEntrega(){
+  const funcs = DB.funcionarios;
+  openModal('Ficha de Entrega — Selecionar Colaborador',`
+    <div class="form-group">
+      <label class="form-label">Colaborador</label>
+      <select class="form-control" id="rel-func">
+        <option value="">Selecione...</option>
+        ${funcs.map(f=>`<option value="${f.matricula}">${f.nome} — ${f.matricula}</option>`).join('')}
+      </select>
+    </div>
+  `,`
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="imprimirFicha($('rel-func').value);closeModal()">🖨 Gerar Ficha</button>
+  `);
+}
+
+function imprimirFicha(mat){
+  if(!mat) return toast('Selecione um colaborador!','danger');
+  const func = DB.funcionarios.find(f=>f.matricula===mat);
+  if(!func) return toast('Colaborador não encontrado!','danger');
+  const entr = DB.entregas.filter(e=>e.matricula===mat);
+  const cfg = DB.config;
+
+  const linhasMin = 18;
+  const itens = entr.flatMap(e=>(e.itens||[]).map(i=>({...i,data:e.data})));
+  const linhas = [...itens];
+  while(linhas.length < linhasMin) linhas.push(null);
+
+  const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  const cidadeHoje = `${cfg.cidade||'_______________________'}, ______ de _____________________ de 20______`;
+
+  const html = `<div class="ficha-print">
+
+    <!-- CABEÇALHO -->
+    <table style="width:100%;border-collapse:collapse;border:2px solid #333;margin-bottom:0">
+      <tr>
+        <td style="width:180px;padding:8px 12px;border-right:1px solid #333;vertical-align:middle">
+          <div style="font-size:11pt;font-weight:bold;color:#333">${cfg.empresa||'STRATOS'}</div>
+          <div style="font-size:8pt;color:#666">Gerência de Operação Mina</div>
+        </td>
+        <td style="padding:8px 12px;text-align:center;vertical-align:middle;border-right:1px solid #333">
+          <div style="font-size:13pt;font-weight:bold;line-height:1.3">FICHA DE CONTROLE E ENTREGA DE UNIFORME</div>
+          <div style="font-size:9pt;margin-top:2px">UNIFORMES E EQUIPAMENTOS DE TRABALHO</div>
+        </td>
+        <td style="width:120px;padding:8px 12px;text-align:right;vertical-align:middle;font-size:8pt;color:#555">
+          Doc: FM-UNI-001<br>Rev: 01<br>${new Date().toLocaleDateString('pt-BR')}
+        </td>
+      </tr>
+    </table>
+
+    <!-- TABELA DE ENTREGAS -->
+    <table class="ficha-tbl" style="margin-bottom:0;border-top:none">
+      <thead>
+        <tr>
+          <th style="width:80px;border:1px solid #333">Data Entrega</th>
+          <th style="border:1px solid #333">Descrição do Uniforme</th>
+          <th style="width:60px;border:1px solid #333">Tam.</th>
+          <th style="width:40px;border:1px solid #333">Qtd</th>
+          <th style="width:45px;border:1px solid #333">Cód.</th>
+          <th style="width:160px;border:1px solid #333">Assinatura do Funcionário</th>
+        </tr>
+      </thead>
+      <tbody>
+      ${linhas.map(l=>l?`<tr>
+        <td style="border:1px solid #aaa;text-align:center">${fmtDate(l.data)}</td>
+        <td style="border:1px solid #aaa;text-align:left;padding-left:6px">${l.nome}</td>
+        <td style="border:1px solid #aaa;text-align:center">${l.tamanho||'—'}</td>
+        <td style="border:1px solid #aaa;text-align:center">${l.qtd||1}</td>
+        <td style="border:1px solid #aaa;text-align:center"><small>${l.codigo||'—'}</small></td>
+        <td style="border:1px solid #aaa">&nbsp;</td>
+      </tr>`:`<tr style="height:22px">
+        <td style="border:1px solid #aaa">&nbsp;</td>
+        <td style="border:1px solid #aaa">&nbsp;</td>
+        <td style="border:1px solid #aaa">&nbsp;</td>
+        <td style="border:1px solid #aaa">&nbsp;</td>
+        <td style="border:1px solid #aaa">&nbsp;</td>
+        <td style="border:1px solid #aaa">&nbsp;</td>
+      </tr>`).join('')}
+      </tbody>
+    </table>
+
+    <!-- IDENTIFICAÇÃO DO COLABORADOR -->
+    <div style="border:1px solid #333;border-top:none;padding:6px 10px;font-size:9pt;margin-bottom:8px">
+      <strong>Nome do Colaborador:</strong> ${func.nome}
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <strong>Nº de Matrícula:</strong> ${func.matricula}
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <strong>Função:</strong> ${func.funcao||'—'}
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <strong>Turma:</strong> ${func.turma||'—'}
+    </div>
+
+    <!-- TÍTULO DA SEÇÃO LEGAL -->
+    <div style="text-align:center;font-weight:bold;font-size:10pt;margin-bottom:4px">
+      FICHA DE CONTROLE DE ENTREGA DE UNIFORME
+    </div>
+    <div style="text-align:center;font-size:8pt;margin-bottom:6px">
+      (Com base em disposições legais da CLT e das Normas Regulamentadoras NR 01 e NR 06, do Ministério do Trabalho e Emprego)
+    </div>
+
+    <!-- TEXTO LEGAL -->
+    <div class="ficha-legal">
+      <p style="font-style:italic;margin-bottom:4px"><strong>O objetivo desta Guia é servir de meio de entrega e controle dos Uniformes e Equipamentos de Trabalho que ficarão aos cuidados do Colaborador acima identificado.</strong></p>
+
+      <p style="margin-bottom:4px">O número do Código/Referência encontra-se registrado no sistema de controle e deverá ser verificado e confirmado através de rubrica do responsável pela entrega.</p>
+
+      <p style="margin-bottom:4px">Declaro para todos efeitos legais que recebi da empresa <strong>${cfg.empresa||'STRATOS'}${cfg.cnpj?' (CNPJ: '+cfg.cnpj+')':''}</strong>, os Uniformes e Equipamentos constantes da lista acima, novos e em perfeitas condições de uso, e que estou ciente das obrigações descritas na NR 06, baixada pela Portaria MTb 3214/78, subitem 6.7.1, a saber:</p>
+
+      <p style="margin-left:12px;margin-bottom:2px"><strong>a)</strong> usar, utilizando-o apenas para a finalidade a que se destina;</p>
+      <p style="margin-left:12px;margin-bottom:2px"><strong>b)</strong> responsabilizar-se pela guarda e conservação;</p>
+      <p style="margin-left:12px;margin-bottom:2px"><strong>c)</strong> comunicar ao empregador qualquer alteração que o torne impróprio para uso; e</p>
+      <p style="margin-left:12px;margin-bottom:2px"><strong>d)</strong> cumprir as determinações do empregador sobre o uso adequado.</p>
+      <p style="margin-left:12px;margin-bottom:4px"><strong>e)</strong> Fico proibido de dar ou emprestar o equipamento que estiver sob minha responsabilidade, só podendo fazê-lo se receber ordem por escrito da pessoa autorizada para tal fim.</p>
+
+      <p style="margin-bottom:4px">Declaro, também, que estou ciente das disposições do Art. 462 e § 1º da CLT, e autorizo o desconto salarial proporcional ao custo de reparação do dano que os uniformes aos meus cuidados venham apresentar.</p>
+
+      <p style="margin-bottom:4px">Declaro ainda que estou ciente das disposições do artigo 158, alínea "a", da CLT, e do item 1.8 da NR 01, em especial daquela do subitem 1.8.1, de que constitui ato faltoso à recusa injustificada de usar o uniforme fornecido pela empresa, incorrendo nas penas da Lei cabíveis que irão desde simples advertências até a dispensa por justa causa (Art. 482 da C.L.T).</p>
+    </div>
+
+    <!-- DATA E ASSINATURA -->
+    <div style="font-size:8.5pt;margin:10px 0 16px">${cidadeHoje}</div>
+
+    <div class="ficha-sig">
+      <div class="sig-line" style="width:220px">
+        <div class="line"></div>
+        <div style="font-size:9pt"><strong>${func.nome}</strong></div>
+        <small>Assinatura do Colaborador — Mat. ${func.matricula}</small>
+      </div>
+      <div class="sig-line" style="width:220px">
+        <div class="line"></div>
+        <div style="font-size:9pt"><strong>${func.responsavel||'Responsável pela Entrega'}</strong></div>
+        <small>Responsável / Supervisor</small>
+      </div>
+    </div>
+
+    <!-- RODAPÉ LEGAL -->
+    <div style="margin-top:16px;border-top:1px solid #ccc;padding-top:8px;font-size:7pt;color:#555">
+      <strong>NR 06 — 6.7.1:</strong> Cabe ao empregado: a) usar o EPI apenas para a finalidade a que se destina; b) responsabilizar-se pela guarda e conservação; c) comunicar ao empregador qualquer alteração que o torne impróprio para uso; d) cumprir as determinações do empregador sobre o uso adequado. &nbsp;|&nbsp;
+      <strong>NR 01 — 1.8:</strong> Cabe ao empregado cumprir as disposições legais e regulamentares sobre segurança e medicina do trabalho. Constitui ato faltoso (1.8.1) a recusa injustificada. &nbsp;|&nbsp;
+      <strong>CLT Art. 462 § 1º:</strong> Em caso de dano causado pelo empregado, o desconto será lícito, desde que esta possibilidade tenha sido acordada ou na ocorrência de dolo do empregado.
+    </div>
+  </div>`;
+
+  const printArea = $('print-area');
+  printArea.innerHTML = html;
+  printArea.style.cssText = 'display:block !important;';
+  $('app-content').style.display='none';
+  setTimeout(()=>{
+    window.print();
+    setTimeout(()=>{
+      printArea.style.cssText = 'display:none;';
+      $('app-content').style.display='';
+    }, 500);
+  }, 500);
+}
+
+function relatorioCustoTurma(){
+  const entr = DB.entregas;
+  const funcs = DB.funcionarios;
+  const custoTurma = {};
+  const countTurma = {};
+  entr.forEach(e=>{
+    const func = funcs.find(f=>f.matricula===e.matricula);
+    const turma = func?.turma||'Sem Turma';
+    const total = (e.itens||[]).reduce((s,i)=>s+(+i.valor||0)*(+i.qtd||1),0);
+    custoTurma[turma]=(custoTurma[turma]||0)+total;
+    countTurma[turma]=(countTurma[turma]||0)+1;
+  });
+
+  $('relatorio-preview').innerHTML = `
+    <div class="section-title">Custo por Turma</div>
+    <div class="tbl-wrap"><table>
+    <thead><tr><th>Turma</th><th>Nº Entregas</th><th>Custo Total</th><th>Média por Entrega</th></tr></thead>
+    <tbody>
+    ${Object.keys(custoTurma).sort().map(t=>`<tr>
+      <td><span class="turma-badge">${t}</span></td>
+      <td>${countTurma[t]}</td>
+      <td>${fmtMoney(custoTurma[t])}</td>
+      <td>${fmtMoney(custoTurma[t]/countTurma[t])}</td>
+    </tr>`).join('')}
+    <tr style="font-weight:bold;background:var(--surface2)">
+      <td>TOTAL</td>
+      <td>${Object.values(countTurma).reduce((s,v)=>s+v,0)}</td>
+      <td>${fmtMoney(Object.values(custoTurma).reduce((s,v)=>s+v,0))}</td>
+      <td>—</td>
+    </tr>
+    </tbody></table></div>`;
+}
+
+function relatorioEstoque(){
+  const items = [...DB.estoque].sort((a,b)=>a.nome>b.nome?1:-1);
+  $('relatorio-preview').innerHTML = `
+    <div class="section-title">Posição de Estoque</div>
+    <div class="tbl-wrap"><table>
+    <thead><tr><th>Código</th><th>Item</th><th>Tamanho</th><th>Valor</th><th>Estoque</th><th>Status</th></tr></thead>
+    <tbody>
+    ${items.map(e=>{
+      const qty=+e.estoque||0;
+      return `<tr>
+        <td><small>${e.codigo||'—'}</small></td>
+        <td>${e.nome}</td><td>${e.tamanho||'—'}</td>
+        <td>${fmtMoney(e.valor)}</td><td>${qty}</td>
+        <td>${qty===0?'<span class="badge badge-empty">Sem estoque</span>':qty<3?'<span class="badge badge-low">Crítico</span>':'<span class="badge badge-ok">OK</span>'}</td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>`;
+}
+
+function relatorioPendentes(){
+  const peds = DB.pedidos.filter(p=>p.status!=='entregue');
+  $('relatorio-preview').innerHTML = `
+    <div class="section-title">Pedidos Pendentes/Aprovados (${peds.length})</div>
+    ${peds.length===0?'<div class="alert alert-success">Nenhum pedido pendente!</div>':`
+    <div class="tbl-wrap"><table>
+    <thead><tr><th>Data</th><th>Colaborador</th><th>Turma</th><th>Itens</th><th>Status</th></tr></thead>
+    <tbody>
+    ${peds.map(p=>`<tr>
+      <td>${fmtDate(p.data)}</td><td>${p.nome}</td>
+      <td><span class="turma-badge">${p.turma||'—'}</span></td>
+      <td>${(p.itens||[]).length}</td>
+      <td>${badgeStatus(p.status)}</td>
+    </tr>`).join('')}
+    </tbody></table></div>`}`;
+}
+
+function relatorioRequisicoes(){
+  const reqs = [...DB.requisicoes].reverse();
+  const totalGeral = reqs.reduce((s,r)=>s+r.total,0);
+  $('relatorio-preview').innerHTML = `
+    <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span>Requisições ao Depósito (${reqs.length})</span>
+      <span style="color:var(--amber);font-size:14px">Total: ${fmtMoney(totalGeral)}</span>
+    </div>
+    ${reqs.length===0?'<div class="alert alert-info">Nenhuma requisição gerada ainda. Vá em Estoque → Solicitar Depósito.</div>':`
+    <div class="tbl-wrap"><table>
+    <thead><tr><th>Nº</th><th>Data</th><th>Itens</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead>
+    <tbody>
+    ${reqs.map(r=>`<tr>
+      <td><strong>${r.numero}</strong></td>
+      <td>${fmtDate(r.data)}</td>
+      <td>${(r.itens||[]).length} item(s)</td>
+      <td style="color:var(--amber);font-weight:bold">${fmtMoney(r.total)}</td>
+      <td><span class="badge ${r.status==='atendido'?'badge-delivered':'badge-pending'}">${r.status==='atendido'?'Atendido':'Pendente'}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-xs btn-secondary" onclick="verRequisicao('${r.id}')">Ver Itens</button>
+        <button class="btn btn-xs btn-primary" onclick="imprimirRequisicao('${r.id}')">🖨 Reimprimir</button>
+        ${r.status==='pendente'?`<button class="btn btn-xs btn-success" onclick="marcarReqAtendida('${r.id}')">✓ Atendida</button>`:''}
+      </td>
+    </tr>`).join('')}
+    </tbody></table></div>`}`;
+}
+
+function verRequisicao(id){
+  const req = DB.requisicoes.find(r=>r.id===id);
+  if(!req) return;
+  openModal(`Requisição ${req.numero}`,`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div><label class="form-label">Número</label><div>${req.numero}</div></div>
+      <div><label class="form-label">Data</label><div>${fmtDate(req.data)}</div></div>
+      <div><label class="form-label">Status</label><div><span class="badge ${req.status==='atendido'?'badge-delivered':'badge-pending'}">${req.status}</span></div></div>
+      <div><label class="form-label">Total</label><div style="color:var(--amber);font-weight:bold">${fmtMoney(req.total)}</div></div>
+    </div>
+    ${req.obs?`<div class="alert alert-info" style="margin-bottom:14px"><strong>Obs:</strong> ${req.obs}</div>`:''}
+    <div class="tbl-wrap"><table>
+    <thead><tr><th>Item</th><th>Tamanho</th><th>Estq. Atual</th><th>Qtd Solic.</th><th>Valor Unit.</th><th>Total</th></tr></thead>
+    <tbody>
+    ${(req.itens||[]).map(i=>`<tr>
+      <td>${i.nome}</td><td>${i.tamanho||'—'}</td>
+      <td style="color:var(--danger)">${i.estoqueAtual}</td>
+      <td style="font-weight:bold">${i.qtdSolicitada}</td>
+      <td>${fmtMoney(i.valor)}</td>
+      <td style="font-weight:bold">${fmtMoney(i.valor*i.qtdSolicitada)}</td>
+    </tr>`).join('')}
+    </tbody></table></div>
+  `,`
+    <button class="btn btn-secondary" onclick="closeModal()">Fechar</button>
+    <button class="btn btn-primary" onclick="closeModal();imprimirRequisicao('${req.id}')">🖨 Reimprimir</button>
+  `, true);
+}
+
+function marcarReqAtendida(id){
+  const reqs = DB.requisicoes;
+  const r = reqs.find(r=>r.id===id);
+  if(r){ r.status='atendido'; DB.requisicoes=reqs; toast('Requisição marcada como atendida!'); relatorioRequisicoes(); }
+}
+
+function relatorioCentroCusto(){
+  const funcs = DB.funcionarios;
+  const entr = DB.entregas;
+  const ccs = [...new Set(funcs.map(f=>f.centroCusto||'Sem C.C.'))].sort();
+
+  $('relatorio-preview').innerHTML = `
+    <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span>Custo por Centro de Custo</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label class="form-label" style="margin:0">Data:</label>
+        <input type="date" class="form-control" id="cc-data" value="${today()}" style="width:150px">
+        <select class="form-control" id="cc-filtro" style="width:180px">
+          <option value="">Todos os C.C.</option>
+          ${ccs.map(c=>`<option value="${c}">${c}</option>`).join('')}
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="gerarRelatCC()">🔍 Filtrar</button>
+        <button class="btn btn-primary btn-sm" onclick="imprimirRelCC()">🖨 Imprimir</button>
+      </div>
+    </div>
+    <div id="cc-resultado"></div>`;
+  gerarRelatCC();
+}
+
+function gerarRelatCC(){
+  const funcs = DB.funcionarios;
+  const entr = DB.entregas;
+  const dataFiltro = $('cc-filtro-data') ? $('cc-filtro-data').value : ($('cc-data')?.value||'');
+  const ccFiltro = $('cc-filtro')?.value||'';
+
+  // Filtrar entregas
+  let entrs = entr;
+  if(dataFiltro) entrs = entrs.filter(e=>e.data===dataFiltro);
+
+  // Agrupar por CC
+  const grupos = {};
+  entrs.forEach(e=>{
+    const f = funcs.find(f=>f.matricula===e.matricula);
+    const cc = f?.centroCusto||'Sem C.C.';
+    if(ccFiltro && cc!==ccFiltro) return;
+    if(!grupos[cc]) grupos[cc]=[];
+    grupos[cc].push({...e, func:f});
+  });
+
+  if(!Object.keys(grupos).length){
+    $('cc-resultado').innerHTML='<div class="alert alert-info">Nenhuma entrega encontrada para os filtros selecionados.</div>';
+    return;
+  }
+
+  let html = '';
+  let totalGeral = 0;
+  Object.keys(grupos).sort().forEach(cc=>{
+    const items = grupos[cc];
+    const totalCC = items.reduce((s,e)=>{
+      return s+(e.itens||[]).reduce((ss,i)=>ss+(+i.valor||0)*(+i.qtd||1),0);
+    },0);
+    totalGeral += totalCC;
+    html += `
+    <div style="margin-bottom:16px">
+      <div style="background:var(--teal);color:#fff;padding:8px 12px;border-radius:6px 6px 0 0;display:flex;justify-content:space-between">
+        <strong>Centro de Custo: ${cc}</strong>
+        <strong>${fmtMoney(totalCC)}</strong>
+      </div>
+      <div class="tbl-wrap" style="border-radius:0 0 6px 6px">
+      <table>
+        <thead><tr><th>Data</th><th>Colaborador</th><th>Matrícula</th><th>Turma</th><th>Item</th><th>Tam.</th><th>Qtd</th><th>Valor Unit.</th><th>Total</th></tr></thead>
+        <tbody>
+        ${items.flatMap(e=>(e.itens||[]).map(i=>`<tr>
+          <td>${fmtDate(e.data)}</td>
+          <td>${e.nome}</td>
+          <td>${e.matricula}</td>
+          <td>${e.func?.turma||'—'}</td>
+          <td>${i.nome}</td>
+          <td>${i.tamanho||'—'}</td>
+          <td>${i.qtd||1}</td>
+          <td>${fmtMoney(i.valor)}</td>
+          <td style="font-weight:bold">${fmtMoney((+i.valor||0)*(+i.qtd||1))}</td>
+        </tr>`)).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+  });
+
+  html += `<div style="text-align:right;font-size:15px;font-weight:bold;padding:12px;background:var(--primary-dim);border-radius:6px;color:var(--primary)">
+    TOTAL GERAL: ${fmtMoney(totalGeral)}
+  </div>`;
+
+  $('cc-resultado').innerHTML = html;
+}
+
+function imprimirRelCC(){
+  const funcs = DB.funcionarios;
+  const entr = DB.entregas;
+  const dataFiltro = $('cc-data')?.value||'';
+  const ccFiltro = $('cc-filtro')?.value||'';
+  const cfg = DB.config;
+
+  let entrs = entr;
+  if(dataFiltro) entrs = entrs.filter(e=>e.data===dataFiltro);
+
+  const grupos = {};
+  entrs.forEach(e=>{
+    const f = funcs.find(f=>f.matricula===e.matricula);
+    const cc = f?.centroCusto||'Sem C.C.';
+    if(ccFiltro && cc!==ccFiltro) return;
+    if(!grupos[cc]) grupos[cc]=[];
+    grupos[cc].push({...e, func:f});
+  });
+
+  if(!Object.keys(grupos).length) return toast('Nenhuma entrega para imprimir!','warn');
+
+  let totalGeral = 0;
+  let corpoHTML = '';
+  Object.keys(grupos).sort().forEach(cc=>{
+    const items = grupos[cc];
+    const totalCC = items.reduce((s,e)=>s+(e.itens||[]).reduce((ss,i)=>ss+(+i.valor||0)*(+i.qtd||1),0),0);
+    totalGeral += totalCC;
+    corpoHTML += `
+    <div style="margin-bottom:14px">
+      <div style="background:#1e3a3a;color:#fff;padding:6px 10px;font-weight:bold;display:flex;justify-content:space-between;font-size:10pt">
+        <span>Centro de Custo: ${cc}</span><span>${fmtMoney(totalCC)}</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:8pt">
+        <thead><tr style="background:#f0f0f0">
+          <th style="padding:4px 6px;border:1px solid #ccc;text-align:left">Data</th>
+          <th style="padding:4px 6px;border:1px solid #ccc;text-align:left">Colaborador</th>
+          <th style="padding:4px 6px;border:1px solid #ccc;text-align:left">Matrícula</th>
+          <th style="padding:4px 6px;border:1px solid #ccc;text-align:left">Item</th>
+          <th style="padding:4px 6px;border:1px solid #ccc;text-align:center">Tam.</th>
+          <th style="padding:4px 6px;border:1px solid #ccc;text-align:center">Qtd</th>
+          <th style="padding:4px 6px;border:1px solid #ccc;text-align:right">Total</th>
+        </tr></thead>
+        <tbody>
+        ${items.flatMap(e=>(e.itens||[]).map(i=>`<tr>
+          <td style="padding:3px 6px;border:1px solid #ddd">${fmtDate(e.data)}</td>
+          <td style="padding:3px 6px;border:1px solid #ddd">${e.nome}</td>
+          <td style="padding:3px 6px;border:1px solid #ddd">${e.matricula}</td>
+          <td style="padding:3px 6px;border:1px solid #ddd">${i.nome}</td>
+          <td style="padding:3px 6px;border:1px solid #ddd;text-align:center">${i.tamanho||'—'}</td>
+          <td style="padding:3px 6px;border:1px solid #ddd;text-align:center">${i.qtd||1}</td>
+          <td style="padding:3px 6px;border:1px solid #ddd;text-align:right;font-weight:bold">R$ ${((+i.valor||0)*(+i.qtd||1)).toFixed(2).replace('.',',')}</td>
+        </tr>`)).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  });
+
+  const html = `<div class="ficha-print">
+    <div class="ficha-header">
+      <div class="company">${cfg.empresa||'STRATOS'}</div>
+      <div class="title">RELATÓRIO DE CUSTO POR CENTRO DE CUSTO<br>
+        <small style="font-size:8pt;font-weight:normal">${dataFiltro?'Data: '+fmtDate(dataFiltro):'Todas as datas'}${ccFiltro?' | C.C.: '+ccFiltro:' | Todos os Centros de Custo'}</small>
+      </div>
+      <div class="doc-info">Emissão:<br>${new Date().toLocaleDateString('pt-BR')}</div>
+    </div>
+    ${corpoHTML}
+    <div style="text-align:right;font-size:12pt;font-weight:bold;padding:10px;border-top:2px solid #1e3a3a;margin-top:8px;color:#8B1A1A">
+      TOTAL GERAL: R$ ${totalGeral.toFixed(2).replace('.',',')}
+    </div>
+  </div>`;
+
+  const printArea = $('print-area');
+  printArea.innerHTML = html;
+  printArea.style.cssText = 'display:block !important;';
+  $('app-content').style.display='none';
+  setTimeout(()=>{
+    window.print();
+    setTimeout(()=>{
+      printArea.style.cssText='display:none;';
+      $('app-content').style.display='';
+    },500);
+  },500);
+}
+
+// ─── IMPORTAR ─────────────────────────────────────────────────────
+function importar(){
+  setActions('');
+  setContent(`
+    <div class="tabs">
+      <div class="tab active" onclick="showImportTab('func',this)">Funcionários</div>
+      <div class="tab" onclick="showImportTab('estq',this)">Estoque</div>
+    </div>
+    <div id="import-tab-func">
+      <div class="alert alert-info" style="margin-bottom:16px">
+        📋 Formato esperado: <strong>Gerência | Matricula | Nome Colaborador | Turma | função | Responsável</strong>
+      </div>
+      <div class="drop-zone" onclick="$('file-func').click()" id="dz-func">
+        <div class="icon">📂</div>
+        <p>Clique ou arraste o arquivo Excel (.xlsx) dos funcionários</p>
+        <small>turmas_operacao_mina_consolidado.xlsx</small>
+      </div>
+      <input type="file" id="file-func" accept=".xlsx,.xls" style="display:none" onchange="importFuncionarios(this)">
+      <div id="import-func-preview" style="margin-top:16px"></div>
+    </div>
+    <div id="import-tab-estq" style="display:none">
+      <div class="alert alert-info" style="margin-bottom:16px">
+        📋 Formato esperado: <strong>CÓDIGO | NOME DO ITEM | VALOR | TAMANHO | TOTAL DE ITENS EM ESTOQUE</strong>
+      </div>
+      <div class="drop-zone" onclick="$('file-estq').click()" id="dz-estq">
+        <div class="icon">📂</div>
+        <p>Clique ou arraste o arquivo Excel (.xlsx) do estoque</p>
+        <small>controle_de_estoque_mina.xlsx</small>
+      </div>
+      <input type="file" id="file-estq" accept=".xlsx,.xls" style="display:none" onchange="importEstoque(this)">
+      <div id="import-estq-preview" style="margin-top:16px"></div>
+    </div>
+    
+    <div class="card" style="margin-top:20px">
+      <div class="section-title">Configurações da Empresa</div>
+      <div class="form-grid form-grid-3">
+        <div class="form-group">
+          <label class="form-label">Nome da Empresa</label>
+          <input class="form-control" id="cfg-empresa" value="${DB.config.empresa||'Stratos'}" oninput="saveCfg()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CNPJ</label>
+          <input class="form-control" id="cfg-cnpj" value="${DB.config.cnpj||''}" oninput="saveCfg()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cidade</label>
+          <input class="form-control" id="cfg-cidade" value="${DB.config.cidade||''}" oninput="saveCfg()">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="section-title">Backup e Restauração</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="exportarBackup()">⬇ Exportar Backup JSON</button>
+        <button class="btn btn-secondary" onclick="$('file-restore').click()">⬆ Restaurar Backup</button>
+        <button class="btn btn-danger" onclick="limparDados()">⚠ Limpar Todos os Dados</button>
+      </div>
+      <input type="file" id="file-restore" accept=".json" style="display:none" onchange="restaurarBackup(this)">
+    </div>
+  `);
+
+  // Drag & drop
+  ['dz-func','dz-estq'].forEach(id=>{
+    const dz = $(id);
+    if(!dz) return;
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+    dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+    dz.addEventListener('drop',e=>{
+      e.preventDefault();dz.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if(!f) return;
+      if(id==='dz-func') processImportFunc(f);
+      else processImportEstq(f);
+    });
+  });
+}
+
+function showImportTab(tab, el){
+  $('import-tab-func').style.display=tab==='func'?'':'none';
+  $('import-tab-estq').style.display=tab==='estq'?'':'none';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function importFuncionarios(input){ if(input.files[0]) processImportFunc(input.files[0]); }
+function processImportFunc(file){
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try {
+      const wb = XLSX.read(e.target.result,{type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      // Detectar linha de cabeçalho (busca por 'Matricula' ou 'matrícula')
+      let headerRow = 0;
+      for(let i=0;i<Math.min(5,data.length);i++){
+        if(data[i].some(c=>String(c).toLowerCase().includes('matricula')||String(c).toLowerCase().includes('matrícula'))){
+          headerRow=i; break;
+        }
+      }
+      const rows = data.slice(headerRow+1).filter(r=>r[1]||r[2]);
+      window._importFuncs = rows.map(r=>({
+        gerencia: String(r[0]||'Gerência de Operação Mina').trim(),
+        matricula: String(r[1]||'').trim(),
+        nome: String(r[2]||'').trim().toUpperCase(),
+        turma: String(r[3]||'').trim(),
+        funcao: String(r[4]||'').trim(),
+        responsavel: String(r[5]||'').trim()
+      })).filter(f=>f.matricula&&f.nome);
+
+      renderImportPreview();
+    } catch(err) {
+      toast('Erro ao ler o arquivo Excel. Verifique o formato.','danger');
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderImportPreview(){
+  const funcs = window._importFuncs||[];
+  if(!funcs.length){
+    $('import-func-preview').innerHTML='<div class="alert alert-danger">Nenhum dado válido encontrado no arquivo.</div>';
+    return;
+  }
+  const existentes = DB.funcionarios;
+  $('import-func-preview').innerHTML = `
+    <div class="alert alert-info" style="display:flex;justify-content:space-between;align-items:center">
+      <span>✅ <strong>${funcs.length}</strong> colaboradores lidos — edite os campos se necessário antes de importar</span>
+      <button class="btn btn-sm btn-secondary" onclick="adicionarLinhaImport()">+ Adicionar linha</button>
+    </div>
+    <div style="max-height:380px;overflow-y:auto;border:1px solid var(--border);border-radius:6px">
+    <table style="width:100%;border-collapse:collapse;background:var(--surface)">
+      <thead style="position:sticky;top:0;z-index:1">
+        <tr>
+          <th style="background:var(--surface2);padding:8px 10px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border)">Matrícula</th>
+          <th style="background:var(--surface2);padding:8px 10px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border)">Nome</th>
+          <th style="background:var(--surface2);padding:8px 10px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border)">Turma</th>
+          <th style="background:var(--surface2);padding:8px 10px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border)">Função</th>
+          <th style="background:var(--surface2);padding:8px 10px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border)">Responsável</th>
+          <th style="background:var(--surface2);padding:8px 10px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border)">Status</th>
+          <th style="background:var(--surface2);padding:8px 10px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border)"></th>
+        </tr>
+      </thead>
+      <tbody id="import-func-tbody">
+      ${funcs.map((f,i)=>{
+        const existe = existentes.find(e=>e.matricula===f.matricula);
+        return `<tr id="imp-row-${i}">
+          <td style="padding:4px 6px;border-bottom:1px solid var(--border)"><input class="form-control" style="padding:4px 6px;font-size:12px" value="${f.matricula}" id="imp-mat-${i}" oninput="impFuncChanged(${i})"></td>
+          <td style="padding:4px 6px;border-bottom:1px solid var(--border)"><input class="form-control" style="padding:4px 6px;font-size:12px;min-width:180px" value="${f.nome}" id="imp-nome-${i}" oninput="impFuncChanged(${i})"></td>
+          <td style="padding:4px 6px;border-bottom:1px solid var(--border)"><input class="form-control" style="padding:4px 6px;font-size:12px;min-width:120px" value="${f.turma}" id="imp-turma-${i}"></td>
+          <td style="padding:4px 6px;border-bottom:1px solid var(--border)"><input class="form-control" style="padding:4px 6px;font-size:12px;min-width:130px" value="${f.funcao}" id="imp-funcao-${i}"></td>
+          <td style="padding:4px 6px;border-bottom:1px solid var(--border)"><input class="form-control" style="padding:4px 6px;font-size:12px;min-width:120px" value="${f.responsavel}" id="imp-resp-${i}"></td>
+          <td style="padding:4px 6px;border-bottom:1px solid var(--border)" id="imp-status-${i}">
+            ${existe?'<span class="badge badge-approved">Atualizar</span>':'<span class="badge badge-delivered">Novo</span>'}
+          </td>
+          <td style="padding:4px 6px;border-bottom:1px solid var(--border)">
+            <button style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:15px" onclick="removerLinhaImport(${i})" title="Remover">✕</button>
+          </td>
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table></div>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+      <button class="btn btn-primary" onclick="confirmarImportFunc()">✅ Importar todos os colaboradores visíveis</button>
+      <button class="btn btn-secondary" onclick="$('import-func-preview').innerHTML=''">Cancelar</button>
+      <span style="color:var(--text-muted);font-size:12px">Novos: <strong style="color:var(--success)">${funcs.filter(f=>!existentes.find(e=>e.matricula===f.matricula)).length}</strong> | 
+      Atualizar: <strong style="color:var(--info)">${funcs.filter(f=>existentes.find(e=>e.matricula===f.matricula)).length}</strong></span>
+    </div>`;
+}
+
+function impFuncChanged(i){
+  const mat = $(`imp-mat-${i}`)?.value;
+  const existe = DB.funcionarios.find(e=>e.matricula===mat);
+  const statusEl = $(`imp-status-${i}`);
+  if(statusEl) statusEl.innerHTML = existe?'<span class="badge badge-approved">Atualizar</span>':'<span class="badge badge-delivered">Novo</span>';
+}
+
+function removerLinhaImport(i){
+  const row = $(`imp-row-${i}`);
+  if(row) row.remove();
+}
+
+function adicionarLinhaImport(){
+  const tbody = $('import-func-tbody');
+  if(!tbody) return;
+  const i = Date.now();
+  const tr = document.createElement('tr');
+  tr.id=`imp-row-${i}`;
+  tr.innerHTML=`
+    <td style="padding:4px 6px;border-bottom:1px solid var(--border)"><input class="form-control" style="padding:4px 6px;font-size:12px" placeholder="Matrícula" id="imp-mat-${i}" oninput="impFuncChanged(${i})"></td>
+    <td style="padding:4px 6px;border-bottom:1px solid var(--border)"><input class="form-control" style="padding:4px 6px;font-size:12px;min-width:180px" placeholder="NOME COMPLETO" id="imp-nome-${i}"></td>
+    <td style="padding:4px 6px;border-bottom:1px solid var(--border)"><input class="form-control" style="padding:4px 6px;font-size:12px;min-width:120px" placeholder="Turma" id="imp-turma-${i}"></td>
+    <td style="padding:4px 6px;border-bottom:1px solid var(--border)"><input class="form-control" style="padding:4px 6px;font-size:12px;min-width:130px" placeholder="Função" id="imp-funcao-${i}"></td>
+    <td style="padding:4px 6px;border-bottom:1px solid var(--border)"><input class="form-control" style="padding:4px 6px;font-size:12px;min-width:120px" placeholder="Responsável" id="imp-resp-${i}"></td>
+    <td style="padding:4px 6px;border-bottom:1px solid var(--border)" id="imp-status-${i}"><span class="badge badge-delivered">Novo</span></td>
+    <td style="padding:4px 6px;border-bottom:1px solid var(--border)">
+      <button style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:15px" onclick="removerLinhaImport(${i})">✕</button>
+    </td>`;
+  tbody.appendChild(tr);
+}
+
+function confirmarImportFunc(){
+  // Ler todas as linhas visíveis da tabela
+  const tbody = $('import-func-tbody');
+  if(!tbody) return;
+  const rows = tbody.querySelectorAll('tr');
+  const funcs = [];
+  rows.forEach(tr=>{
+    const id = tr.id.replace('imp-row-','');
+    const mat = $(`imp-mat-${id}`)?.value?.trim();
+    const nome = $(`imp-nome-${id}`)?.value?.trim().toUpperCase();
+    if(!mat||!nome) return;
+    funcs.push({
+      matricula: mat,
+      nome,
+      turma: $(`imp-turma-${id}`)?.value?.trim()||'',
+      funcao: $(`imp-funcao-${id}`)?.value?.trim()||'',
+      responsavel: $(`imp-resp-${id}`)?.value?.trim()||'',
+      gerencia: 'Gerência de Operação Mina'
+    });
+  });
+
+  if(!funcs.length) return toast('Nenhum dado para importar!','danger');
+
+  const existentes = DB.funcionarios;
+  const novos = funcs.filter(f=>!existentes.find(e=>e.matricula===f.matricula));
+  const merged = existentes.map(e=>{
+    const upd = funcs.find(f=>f.matricula===e.matricula);
+    return upd||e;
+  });
+  novos.forEach(f=>merged.push(f));
+  DB.funcionarios = merged;
+  toast(`${funcs.length} colaboradores importados! (${novos.length} novos, ${funcs.length-novos.length} atualizados)`);
+  $('import-func-preview').innerHTML='<div class="alert alert-success">✅ Importação concluída! Total: '+merged.length+' colaboradores cadastrados.</div>';
+}
+
+function importEstoque(input){ if(input.files[0]) processImportEstq(input.files[0]); }
+function processImportEstq(file){
+  const reader = new FileReader();
+  reader.onload = e=>{
+    const wb = XLSX.read(e.target.result,{type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(ws,{header:1});
+    const rows = data.slice(1).filter(r=>r[1]);
+    const items = rows.map(r=>({
+      codigo: String(r[0]||'').trim(),
+      nome: String(r[1]||'').trim(),
+      valor: +r[2]||0,
+      tamanho: String(r[3]||'').trim(),
+      estoque: +r[4]||0
+    })).filter(i=>i.nome&&i.nome!=='NOME DO ITEM');
+
+    window._importEstq = items;
+    $('import-estq-preview').innerHTML = `
+      <div class="alert alert-success">✅ ${items.length} itens encontrados</div>
+      <div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table>
+      <thead><tr><th>Código</th><th>Item</th><th>Tamanho</th><th>Valor</th><th>Estoque</th></tr></thead>
+      <tbody>${items.slice(0,10).map(i=>`<tr><td>${i.codigo}</td><td>${i.nome}</td><td>${i.tamanho}</td><td>${fmtMoney(i.valor)}</td><td>${i.estoque}</td></tr>`).join('')}</tbody>
+      </table></div>
+      ${items.length>10?`<div style="color:var(--text-muted);font-size:12px;margin-top:8px">... e mais ${items.length-10} itens</div>`:''}
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="confirmarImportEstq()">✅ Importar ${items.length} itens</button>
+        <button class="btn btn-secondary" onclick="$('import-estq-preview').innerHTML=''">Cancelar</button>
+      </div>`;
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function confirmarImportEstq(){
+  DB.estoque = window._importEstq||[];
+  toast(`${DB.estoque.length} itens importados no estoque!`);
+  $('import-estq-preview').innerHTML='<div class="alert alert-success">✅ Importação concluída!</div>';
+}
+
+function saveCfg(){
+  DB.config = {
+    empresa: $('cfg-empresa')?.value||'Stratos',
+    cnpj: $('cfg-cnpj')?.value||'',
+    cidade: $('cfg-cidade')?.value||''
+  };
+}
+
+function exportarBackup(){
+  const data = JSON.stringify({
+    funcionarios: DB.funcionarios,
+    estoque: DB.estoque,
+    pedidos: DB.pedidos,
+    entregas: DB.entregas,
+    requisicoes: DB.requisicoes,
+    config: DB.config,
+    exportadoEm: new Date().toISOString()
+  }, null, 2);
+  const a = document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(data);
+  a.download='unimina_backup_'+today()+'.json';
+  a.click();
+  toast('Backup exportado!');
+}
+
+function restaurarBackup(input){
+  const f = input.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = e=>{
+    try{
+      const data = JSON.parse(e.target.result);
+      if(data.funcionarios) DB.funcionarios=data.funcionarios;
+      if(data.estoque) DB.estoque=data.estoque;
+      if(data.pedidos) DB.pedidos=data.pedidos;
+      if(data.entregas) DB.entregas=data.entregas;
+      if(data.requisicoes) DB.requisicoes=data.requisicoes;
+      if(data.config) DB.config=data.config;
+      toast('Backup restaurado com sucesso!');
+      navigate(currentPage);
+    }catch(err){ toast('Erro ao ler o backup!','danger'); }
+  };
+  r.readAsText(f);
+}
+
+function limparDados(){
+  if(!confirm('⚠ ATENÇÃO: Isso apagará TODOS os dados! Tem certeza?')) return;
+  if(!confirm('Confirma mesmo? Esta ação não pode ser desfeita!')) return;
+  ['um_func','um_estq','um_pedi','um_entr','um_reqs','um_cfg'].forEach(k=>localStorage.removeItem(k));
+  toast('Dados apagados.','warn');
+  navigate(currentPage);
+}
+
+// ─── FUNCIONÁRIOS ─────────────────────────────────────────────────
+function funcionarios(){
+  setActions(`<button class="btn btn-primary" onclick="addFuncionario()">+ Novo Colaborador</button>`);
+  renderFuncs();
+}
+
+function renderFuncs(){
+  const funcs = DB.funcionarios;
+  $('app-content').innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <div class="search-box" style="flex:1"><span class="icon">🔍</span><input type="text" id="func-search" placeholder="Buscar..." oninput="filterFuncs()" style="width:100%"></div>
+    </div>
+    <div id="funcs-table">
+    ${funcs.length===0?`<div class="alert alert-warn">Nenhum colaborador cadastrado. Use <strong>Importar Excel</strong> para importar a lista.</div>`:`
+    <div class="tbl-wrap"><table>
+    <thead><tr><th>Matrícula</th><th>Nome</th><th>Turma</th><th>Função</th><th>Centro de Custo</th><th>Responsável</th><th>Ações</th></tr></thead>
+    <tbody id="funcs-tbody">
+    ${funcs.map(f=>`<tr>
+      <td>${f.matricula}</td>
+      <td><strong>${f.nome}</strong></td>
+      <td><span class="turma-badge">${f.turma||'—'}</span></td>
+      <td><small>${f.funcao||'—'}</small></td>
+      <td><small style="font-weight:600;color:var(--primary)">${f.centroCusto||'—'}</small></td>
+      <td><small>${f.responsavel||'—'}</small></td>
+      <td>
+        <button class="btn btn-xs btn-secondary" onclick="editFunc('${f.matricula}')">Editar</button>
+        <button class="btn btn-xs btn-danger" onclick="deleteFunc('${f.matricula}')">✕</button>
+      </td>
+    </tr>`).join('')}
+    </tbody></table></div>`}
+  </div>`;
+}
+
+function filterFuncs(){
+  const q=$('func-search').value.toLowerCase();
+  document.querySelectorAll('#funcs-tbody tr').forEach(tr=>{
+    tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none';
+  });
+}
+
+function addFuncionario(){
+  openModal('Novo Colaborador',`
+    <div class="form-grid form-grid-2">
+      <div class="form-group"><label class="form-label">Matrícula *</label><input class="form-control" id="nf-mat"></div>
+      <div class="form-group"><label class="form-label">Nome *</label><input class="form-control" id="nf-nome"></div>
+      <div class="form-group"><label class="form-label">Turma</label><input class="form-control" id="nf-turma"></div>
+      <div class="form-group"><label class="form-label">Função</label><input class="form-control" id="nf-func"></div>
+      <div class="form-group"><label class="form-label">Centro de Custo</label><input class="form-control" id="nf-cc" placeholder="Ex: CC-001"></div>
+      <div class="form-group"><label class="form-label">Responsável</label><input class="form-control" id="nf-resp"></div>
+      <div class="form-group"><label class="form-label">Gerência</label><input class="form-control" id="nf-ger" value="Gerência de Operação Mina"></div>
+    </div>
+  `,`
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveNewFunc()">Salvar</button>
+  `);
+}
+
+function saveNewFunc(){
+  const mat = $('nf-mat').value.trim();
+  const nome = $('nf-nome').value.trim().toUpperCase();
+  if(!mat||!nome) return toast('Matrícula e nome obrigatórios!','danger');
+  const funcs = DB.funcionarios;
+  if(funcs.find(f=>f.matricula===mat)) return toast('Matrícula já cadastrada!','danger');
+  funcs.push({
+    matricula:mat,nome,
+    turma:$('nf-turma').value,
+    funcao:$('nf-func').value,
+    centroCusto:$('nf-cc').value,
+    responsavel:$('nf-resp').value,
+    gerencia:$('nf-ger').value
+  });
+  DB.funcionarios=funcs;
+  closeModal();
+  toast('Colaborador cadastrado!');
+  renderFuncs();
+}
+
+function editFunc(mat){
+  const func = DB.funcionarios.find(f=>f.matricula===mat);
+  if(!func) return;
+  openModal('Editar Colaborador',`
+    <div class="form-grid form-grid-2">
+      <div class="form-group"><label class="form-label">Matrícula</label><input class="form-control" id="ef-mat" value="${func.matricula}" disabled></div>
+      <div class="form-group"><label class="form-label">Nome</label><input class="form-control" id="ef-nome" value="${func.nome}"></div>
+      <div class="form-group"><label class="form-label">Turma</label><input class="form-control" id="ef-turma" value="${func.turma||''}"></div>
+      <div class="form-group"><label class="form-label">Função</label><input class="form-control" id="ef-func" value="${func.funcao||''}"></div>
+      <div class="form-group"><label class="form-label">Centro de Custo</label><input class="form-control" id="ef-cc" value="${func.centroCusto||''}"></div>
+      <div class="form-group"><label class="form-label">Responsável</label><input class="form-control" id="ef-resp" value="${func.responsavel||''}"></div>
+      <div class="form-group"><label class="form-label">Gerência</label><input class="form-control" id="ef-ger" value="${func.gerencia||'Gerência de Operação Mina'}"></div>
+    </div>
+  `,`
+    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveEditFunc('${mat}')">Salvar</button>
+  `);
+}
+
+function saveEditFunc(mat){
+  const funcs = DB.funcionarios;
+  const idx = funcs.findIndex(f=>f.matricula===mat);
+  if(idx<0) return;
+  funcs[idx] = {...funcs[idx],
+    nome:$('ef-nome').value.trim().toUpperCase(),
+    turma:$('ef-turma').value,
+    funcao:$('ef-func').value,
+    centroCusto:$('ef-cc').value,
+    responsavel:$('ef-resp').value,
+    gerencia:$('ef-ger').value
+  };
+  DB.funcionarios=funcs;
+  closeModal();
+  toast('Colaborador atualizado!');
+  renderFuncs();
+}
+
+function deleteFunc(mat){
+  if(!confirm('Excluir este colaborador?')) return;
+  DB.funcionarios = DB.funcionarios.filter(f=>f.matricula!==mat);
+  toast('Colaborador excluído.','warn');
+  renderFuncs();
+}
+
+// ─── MANUAL DE USO ────────────────────────────────────────────────
+function manual(){
+  setActions('');
+  const sec = (icon,title,body)=>`
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="font-size:24px">${icon}</span>
+        <div class="section-title" style="margin:0;padding:0;border:none">${title}</div>
+      </div>
+      ${body}
+    </div>`;
+
+  setContent(`
+    <div style="max-width:820px">
+      <div style="background:linear-gradient(135deg,var(--teal),#2a5f5f);color:#fff;border-radius:10px;padding:20px 24px;margin-bottom:20px">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800">📖 Manual de Uso — UniMina</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:4px">Sistema de Controle de Uniformes — Gerência de Operação Mina · Versão Demo</div>
+      </div>
+
+      ${sec('🗂️','Visão Geral do Sistema',`
+        <p style="font-size:13px;line-height:1.7;color:var(--text-muted)">O <strong>UniMina</strong> é um sistema web para controle de entrega de uniformes. Funciona em dois módulos:</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+          <div style="background:var(--surface2);border-radius:8px;padding:12px">
+            <div style="font-weight:700;color:var(--teal);margin-bottom:4px">📱 Formulário (form.html)</div>
+            <div style="font-size:12px;color:var(--text-muted)">Acessado pelo funcionário no celular. Preenche a solicitação e gera o código para enviar ao gestor.</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:12px">
+            <div style="font-weight:700;color:var(--teal);margin-bottom:4px">🖥️ Painel (uniforme_mina.html)</div>
+            <div style="font-size:12px;color:var(--text-muted)">Acessado pelo gestor no computador. Gerencia pedidos, estoque, fichas, relatórios e dashboard.</div>
+          </div>
+        </div>
+      `)}
+
+      ${sec('👤','Cadastro de Funcionários',`
+        <div style="font-size:13px;line-height:1.8;color:var(--text-muted)">
+          <strong>1. Importar pelo Excel:</strong> Vá em <strong>Importar Excel → Funcionários</strong> e arraste o arquivo <code>turmas_operacao_mina_consolidado.xlsx</code>.<br>
+          <strong>2. Cadastro manual:</strong> Vá em <strong>Funcionários → + Novo Colaborador</strong> e preencha os campos.<br>
+          <strong>3. Campos importantes:</strong> Matrícula, Nome, Turma, Função, <strong>Centro de Custo</strong> (para controle de custos) e Responsável.<br>
+          <strong>4. Editar:</strong> Clique em <strong>Editar</strong> na linha do funcionário para atualizar qualquer campo.
+        </div>
+      `)}
+
+      ${sec('📦','Cadastro de Estoque',`
+        <div style="font-size:13px;line-height:1.8;color:var(--text-muted)">
+          <strong>1. Importar pelo Excel:</strong> Vá em <strong>Importar Excel → Estoque</strong> e arraste o arquivo <code>controle_de_estoque_mina.xlsx</code>.<br>
+          <strong>2. Campos:</strong> Código, Nome do Item, Valor unitário, Tamanho e Quantidade em estoque.<br>
+          <strong>3. Editar quantidades:</strong> Na tela de Estoque, clique direto no número para alterar.<br>
+          <strong>4. Alerta automático:</strong> Itens com menos de 3 unidades ficam marcados em vermelho como "Crítico".<br>
+          <strong>5. Solicitar ao depósito:</strong> Clique em <strong>📤 Solicitar Depósito</strong> para gerar requisição impressa com assinaturas.
+        </div>
+      `)}
+
+      ${sec('📋','Fluxo de Pedido via Formulário',`
+        <div style="font-size:13px;line-height:1.8;color:var(--text-muted)">
+          <strong>Passo 1 — Funcionário:</strong> Acessa <code>form.html</code> no celular, preenche os 4 passos e clica <strong>"Confirmar e Enviar"</strong>.<br>
+          <strong>Passo 2 — Funcionário:</strong> Clica em <strong>"📋 Copiar e Enviar"</strong> e manda o código pelo WhatsApp para o gestor.<br>
+          <strong>Passo 3 — Gestor:</strong> No painel, clica em <strong>Pedidos → 📱 Importar do Forms</strong> e cola o código.<br>
+          <strong>Passo 4 — Sistema:</strong> Verifica automaticamente o estoque item a item e mostra:<br>
+          &nbsp;&nbsp;&nbsp;✅ <strong>Itens disponíveis</strong> → botão "Gerar Ficha de Entrega" (registra na ficha e imprime)<br>
+          &nbsp;&nbsp;&nbsp;📤 <strong>Itens em falta</strong> → botão "Solicitar ao Armazém" (gera requisição impressa)
+        </div>
+      `)}
+
+      ${sec('📋','Pedido Manual (sem formulário)',`
+        <div style="font-size:13px;line-height:1.8;color:var(--text-muted)">
+          <strong>1.</strong> Vá em <strong>Pedidos → + Novo Pedido</strong>.<br>
+          <strong>2.</strong> Selecione o colaborador, data e adicione os itens com tamanho e quantidade.<br>
+          <strong>3.</strong> Salve o pedido — ele ficará com status <strong>Pendente</strong>.<br>
+          <strong>4.</strong> Clique em <strong>✓ Aprovar</strong> para aprovar, depois em <strong>Entregar</strong> para registrar a entrega.<br>
+          <strong>5.</strong> A entrega é registrada automaticamente na ficha do funcionário e o estoque é baixado.
+        </div>
+      `)}
+
+      ${sec('👤','Ficha do Funcionário',`
+        <div style="font-size:13px;line-height:1.8;color:var(--text-muted)">
+          <strong>1.</strong> Vá em <strong>Fichas</strong> e busque pelo nome ou matrícula.<br>
+          <strong>2.</strong> Clique em <strong>Ver Ficha</strong> para ver o histórico completo de entregas.<br>
+          <strong>3.</strong> Clique em <strong>🖨 Imprimir</strong> para gerar a ficha oficial com texto legal (NR-01, NR-06, CLT) e campo de assinatura.<br>
+          <strong>4.</strong> Para excluir uma entrega incorreta, clique em <strong>✕</strong> na linha correspondente.<br>
+          <strong style="color:var(--warn)">⚠ Atenção:</strong> A exclusão de entrega não estorna o estoque automaticamente.
+        </div>
+      `)}
+
+      ${sec('📊','Dashboard e Relatórios',`
+        <div style="font-size:13px;line-height:1.8;color:var(--text-muted)">
+          <strong>Dashboard:</strong> Exibe cards com total de funcionários, pedidos pendentes, estoque crítico, custos de entrega, requisições e Centro de Custo com maior gasto.<br><br>
+          <strong>Relatórios disponíveis:</strong><br>
+          &nbsp;&nbsp;📄 <strong>Ficha de Entrega</strong> — por colaborador, pronta para assinar<br>
+          &nbsp;&nbsp;📊 <strong>Custo por Turma</strong> — total de gastos agrupados<br>
+          &nbsp;&nbsp;📦 <strong>Posição de Estoque</strong> — inventário completo<br>
+          &nbsp;&nbsp;🕐 <strong>Pedidos Pendentes</strong> — aguardando aprovação<br>
+          &nbsp;&nbsp;📤 <strong>Requisições ao Depósito</strong> — histórico com reimpressão<br>
+          &nbsp;&nbsp;💰 <strong>Custo por Centro de Custo</strong> — filtrável por data e C.C., imprimível
+        </div>
+      `)}
+
+      ${sec('💾','Backup e Restauração',`
+        <div style="font-size:13px;line-height:1.8;color:var(--text-muted)">
+          <strong>Importante:</strong> Os dados ficam salvos no navegador (<em>localStorage</em>). Se trocar de computador ou navegador, os dados não aparecem.<br><br>
+          <strong>Exportar backup:</strong> Vá em <strong>Importar Excel → Exportar Backup JSON</strong> e salve o arquivo.<br>
+          <strong>Restaurar backup:</strong> Vá em <strong>Importar Excel → Restaurar Backup</strong> e selecione o arquivo JSON salvo.<br>
+          <strong>🔁 Recomendação:</strong> Exporte o backup semanalmente para não perder dados.
+        </div>
+      `)}
+
+      ${sec('🔗','Links do Sistema',`
+        <div style="font-size:13px;line-height:1.8">
+          <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:8px">
+            <div style="font-weight:700;color:var(--teal)">🖥️ Painel do Gestor</div>
+            <code style="font-size:12px;color:var(--primary)">https://annenpe22-svg.github.io/uniforme-mina/uniforme_mina.html</code>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:12px">
+            <div style="font-weight:700;color:var(--teal)">📱 Formulário para Funcionários</div>
+            <code style="font-size:12px;color:var(--primary)">https://annenpe22-svg.github.io/uniforme-mina/form.html</code>
+          </div>
+        </div>
+      `)}
+    </div>
+  `);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+// Verificar se veio via QR Code (URL com ?pedido=)
+(function checkQRImport(){
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const pedidoParam = params.get('pedido');
+    if(!pedidoParam) return;
+
+    const pedido = JSON.parse(decodeURIComponent(escape(atob(pedidoParam))));
+    const peds = DB.pedidos;
+    if(peds.find(p=>p.id===pedido.id)){
+      // Já importado — apenas navegar para pedidos
+      setTimeout(()=>{
+        navigate('pedidos');
+        toast('Este pedido já foi importado anteriormente.','info');
+      }, 500);
+      return;
+    }
+    peds.push({...pedido, status:'pendente'});
+    DB.pedidos = peds;
+
+    // Limpar URL para não reimportar ao recarregar
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    setTimeout(()=>{
+      navigate('pedidos');
+      toast(`✅ Pedido de ${pedido.nome} importado via QR Code!`);
+    }, 500);
+  } catch(e){ /* URL sem pedido, ignorar */ }
+})();
+
+navigate('dashboard');
+</script>
+</body>
+</html>
